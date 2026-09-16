@@ -44,12 +44,16 @@ export async function updateSettings(req, res) {
       await pool.query(
         `UPDATE room_settings
          SET rate_3top = ?, rate_3tod = ?, rate_2top = ?, rate_2bottom = ?,
-             rate_run_top = ?, rate_run_bottom = ?, commission_rate = ?,
+             rate_run_top = ?, rate_run_bottom = ?,
+             comm_3top = ?, comm_3tod = ?, comm_2top = ?, comm_2bottom = ?,
+             comm_run_top = ?, comm_run_bottom = ?, commission_rate = ?,
              default_limit_per_number = ?, is_enabled = ?
          WHERE room_id = ? AND lottery_id = ?`,
         [
           item.rate_3top, item.rate_3tod, item.rate_2top, item.rate_2bottom,
-          item.rate_run_top, item.rate_run_bottom, item.commission_rate,
+          item.rate_run_top, item.rate_run_bottom,
+          item.comm_3top ?? 8.00, item.comm_3tod ?? 8.00, item.comm_2top ?? 5.00, item.comm_2bottom ?? 5.00,
+          item.comm_run_top ?? 5.00, item.comm_run_bottom ?? 5.00, item.commission_rate ?? 10.00,
           item.default_limit_per_number, item.is_enabled ? 1 : 0,
           roomId, item.lottery_id
         ]

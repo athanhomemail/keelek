@@ -79,10 +79,10 @@ export async function createRoom(req, res) {
 
     // 4. สร้างการตั้งค่าเริ่มต้นให้ห้อง (Room Settings)
     await connection.query(
-      `INSERT INTO room_settings (room_id, lottery_id, is_enabled, rate_3top, rate_3tod, rate_2top, rate_2bottom, rate_run_top, rate_run_bottom, commission_rate, default_limit_per_number)
+      `INSERT INTO room_settings (room_id, lottery_id, is_enabled, rate_3top, rate_3tod, rate_2top, rate_2bottom, rate_run_top, rate_run_bottom, comm_3top, comm_3tod, comm_2top, comm_2bottom, comm_run_top, comm_run_bottom, commission_rate, default_limit_per_number)
        VALUES 
-       (?, 1, TRUE, 900.00, 130.00, 95.00, 95.00, 3.20, 4.20, 10.00, 5000.00),
-       (?, 2, TRUE, 850.00, 120.00, 92.00, 92.00, 3.20, 4.20, 10.00, 5000.00)`,
+       (?, 1, TRUE, 900.00, 130.00, 95.00, 95.00, 3.20, 4.20, 8.00, 8.00, 5.00, 5.00, 5.00, 5.00, 10.00, 5000.00),
+       (?, 2, TRUE, 850.00, 120.00, 92.00, 92.00, 3.20, 4.20, 8.00, 8.00, 5.00, 5.00, 5.00, 5.00, 10.00, 5000.00)`,
       [newRoomId, newRoomId]
     );
 

@@ -56,22 +56,19 @@ export default function App() {
     };
   }, [socket]);
 
-  // Sync active page when role changes or user enters/leaves room
+  // Sync active page when user logs in, role changes, or enters/leaves room
   useEffect(() => {
     if (!user) return;
 
-    if (role === 'GUEST' || !user.room_id) {
-      if (role !== 'ADMIN') {
-        setActivePage('rooms');
-      } else {
-        setActivePage('admin');
-      }
+    if (user.room_id) {
+      // หลังจากที่ user login เข้ามาแล้วถ้ามีห้องแล้ว ให้ default ไว้ที่ คีย์เลข เลย
+      setActivePage('keying');
     } else if (role === 'ADMIN') {
       setActivePage('admin');
     } else {
-      setActivePage('keying');
+      setActivePage('rooms');
     }
-  }, [role, user?.room_id]);
+  }, [user?.id, user?.room_id, role]);
 
   // Loading Screen
   if (loading) {
@@ -107,10 +104,10 @@ export default function App() {
 
       {/* 3. Main Page Content */}
       <main className="flex-1 w-full pb-20 md:pb-8">
-        {(activePage === 'rooms' || (role === 'GUEST' && activePage !== 'admin')) && (
+        {(activePage === 'rooms' || (!user.room_id && activePage !== 'admin')) && (
           <GuestRoomPage onJoined={() => setActivePage('keying')} />
         )}
-        {activePage === 'keying' && role !== 'GUEST' && (
+        {activePage === 'keying' && (user.room_id || role === 'ADMIN') && (
           <KeyingPage
             editingBill={editingBill}
             onCancelEdit={() => setEditingBill(null)}
@@ -120,7 +117,7 @@ export default function App() {
             }}
           />
         )}
-        {activePage === 'bills' && role !== 'GUEST' && (
+        {activePage === 'bills' && (user.room_id || role === 'ADMIN') && (
           <BillSummaryPage
             onEditBill={(bill) => {
               setEditingBill(bill);
@@ -128,7 +125,7 @@ export default function App() {
             }}
           />
         )}
-        {(activePage === 'room' || activePage === 'team' || activePage === 'settings') && role !== 'GUEST' && (
+        {(activePage === 'room' || activePage === 'team' || activePage === 'settings') && (user.room_id || role === 'ADMIN') && (
           <RoomPage onLeaveRoom={() => setActivePage('rooms')} />
         )}
         {activePage === 'admin' && (

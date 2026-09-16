@@ -27,7 +27,7 @@ export default function GuestRoomPage({ onJoined }) {
     try {
       const res = await axios.get('/api/auth/profile');
       if (res.data.success && res.data.user) {
-        if (res.data.user.role === 'LEADER' && res.data.user.room_id) {
+        if (res.data.user.room_id) {
           onJoined?.();
         } else if (res.data.user.room_status === 'PENDING') {
           setPendingRoom({

@@ -62,7 +62,7 @@ export default function Navbar({ activePage, setActivePage, onOpenNotifications,
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           
           {/* Brand Logo */}
-          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onClick={() => setActivePage(role === 'GUEST' ? 'rooms' : 'keying')}>
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onClick={() => setActivePage(user?.room_id ? 'keying' : (role === 'ADMIN' ? 'admin' : 'rooms'))}>
             <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-400 p-[1px] shadow-lg shadow-amber-500/20">
               <div className="w-full h-full bg-obsidian-950 rounded-[11px] flex items-center justify-center">
                 <Keyboard className="w-5 h-5 text-amber-400" />

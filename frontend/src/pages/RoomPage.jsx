@@ -68,7 +68,21 @@ export default function RoomPage({ onLeaveRoom }) {
         axios.get('/api/draw-periods?status=OPEN')
       ]);
       if (settingRes.data.success) {
-        setSettingsList(settingRes.data.settings);
+        const cleanedSettings = (settingRes.data.settings || []).map(s => {
+          const clean = { ...s };
+          const numericKeys = [
+            'rate_3top', 'rate_3tod', 'rate_2top', 'rate_2bottom', 'rate_run_top', 'rate_run_bottom',
+            'comm_3top', 'comm_3tod', 'comm_2top', 'comm_2bottom', 'comm_run_top', 'comm_run_bottom',
+            'commission_rate', 'default_limit_per_number'
+          ];
+          for (const key of numericKeys) {
+            if (clean[key] !== undefined && clean[key] !== null && clean[key] !== '') {
+              clean[key] = String(Math.round(Number(clean[key])));
+            }
+          }
+          return clean;
+        });
+        setSettingsList(cleanedSettings);
         setRules(settingRes.data.rules);
       }
       if (periodRes.data.success) {
@@ -189,9 +203,18 @@ export default function RoomPage({ onLeaveRoom }) {
 
   // Settings Handlers
   const handleSettingChange = (lotteryId, field, value) => {
+    const numericFields = [
+      'rate_3top', 'rate_3tod', 'rate_2top', 'rate_2bottom', 'rate_run_top', 'rate_run_bottom',
+      'comm_3top', 'comm_3tod', 'comm_2top', 'comm_2bottom', 'comm_run_top', 'comm_run_bottom',
+      'commission_rate', 'default_limit_per_number'
+    ];
+    let sanitizedValue = value;
+    if (numericFields.includes(field) && typeof value === 'string') {
+      sanitizedValue = value.replace(/[^0-9]/g, '');
+    }
     setSettingsList(prev => prev.map(s => {
       if (s.lottery_id === lotteryId) {
-        return { ...s, [field]: value };
+        return { ...s, [field]: sanitizedValue };
       }
       return s;
     }));
@@ -274,7 +297,21 @@ export default function RoomPage({ onLeaveRoom }) {
               {teamData?.room?.name || 'ห้องคีย์หวย'}
             </h1>
             <p className="text-xs text-slate-400">
-              เปิดเมื่อ: {teamData?.room?.created_at ? new Date(teamData.room.created_at).toLocaleDateString('th-TH') : '-'}
+              เปิดเมื่อ:{' '}
+              <span className="text-slate-300 font-medium">
+                {teamData?.room?.created_at
+                  ? `${new Date(teamData.room.created_at).toLocaleDateString('th-TH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      timeZone: 'Asia/Bangkok'
+                    })} เวลา ${new Date(teamData.room.created_at).toLocaleTimeString('th-TH', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: 'Asia/Bangkok'
+                    })} น.`
+                  : '-'}
+              </span>
             </p>
           </div>
 
@@ -467,7 +504,7 @@ export default function RoomPage({ onLeaveRoom }) {
             <div>
               <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2">
                 <Settings className="w-5 h-5 text-amber-400" />
-                <span>กำหนดอัตราจ่ายและส่วนแบ่ง (บาทละ)</span>
+                <span>กำหนดอัตราจ่าย/ส่วนแบ่ง</span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
                 กำหนดราคาจ่ายให้ลูกค้า และ % ส่วนแบ่งลูกทีมของแต่ละประเภทหวย
@@ -501,82 +538,67 @@ export default function RoomPage({ onLeaveRoom }) {
                   </label>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="text-slate-400 block mb-1">3 ตัวบน (บาทละ)</label>
-                    <input
-                      type="number"
-                      value={setting.rate_3top}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'rate_3top', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">3 ตัวโต๊ด (บาทละ)</label>
-                    <input
-                      type="number"
-                      value={setting.rate_3tod}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'rate_3tod', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">2 ตัวบน (บาทละ)</label>
-                    <input
-                      type="number"
-                      value={setting.rate_2top}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'rate_2top', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">2 ตัวล่าง (บาทละ)</label>
-                    <input
-                      type="number"
-                      value={setting.rate_2bottom}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'rate_2bottom', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">วิ่งบน (บาทละ)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={setting.rate_run_top}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'rate_run_top', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">วิ่งล่าง (บาทละ)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={setting.rate_run_bottom}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'rate_run_bottom', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">ส่วนแบ่งลูกทีม (%)</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={setting.commission_rate}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'commission_rate', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-emerald-400 font-mono font-bold outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 block mb-1">เพดานรับต่อเลข (฿)</label>
-                    <input
-                      type="number"
-                      value={setting.default_limit_per_number}
-                      onChange={(e) => handleSettingChange(setting.lottery_id, 'default_limit_per_number', e.target.value)}
-                      className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 text-slate-100 font-mono font-bold outline-none"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { id: '3top', label: '3 ตัวบน', rateKey: 'rate_3top', commKey: 'comm_3top' },
+                    { id: '3tod', label: '3 ตัวโต๊ด', rateKey: 'rate_3tod', commKey: 'comm_3tod' },
+                    { id: '2top', label: '2 ตัวบน', rateKey: 'rate_2top', commKey: 'comm_2top' },
+                    { id: '2bottom', label: '2 ตัวล่าง', rateKey: 'rate_2bottom', commKey: 'comm_2bottom' },
+                    { id: 'run_top', label: 'วิ่งบน', rateKey: 'rate_run_top', commKey: 'comm_run_top' },
+                    { id: 'run_bottom', label: 'วิ่งล่าง', rateKey: 'rate_run_bottom', commKey: 'comm_run_bottom' }
+                  ].map((t) => (
+                    <div key={t.id} className="p-2.5 bg-obsidian-950/70 border border-slate-800/90 rounded-2xl space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-200">{t.label}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block mb-0.5">จ่าย (บาทละ)</span>
+                          <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            value={setting[t.rateKey] ?? ''}
+                            onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                            onChange={(e) => handleSettingChange(setting.lottery_id, t.rateKey, e.target.value)}
+                            className="w-full bg-obsidian-900 border border-slate-700 focus:border-amber-400 rounded-xl px-2.5 py-1.5 text-amber-300 font-mono font-bold outline-none text-xs"
+                            placeholder="จ่าย"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block mb-0.5">ส่วนแบ่ง (%)</span>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="100"
+                              value={setting[t.commKey] ?? ''}
+                              onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                              onChange={(e) => handleSettingChange(setting.lottery_id, t.commKey, e.target.value)}
+                              className="w-full bg-obsidian-900 border border-slate-700 focus:border-emerald-400 rounded-xl px-2.5 py-1.5 text-emerald-400 font-mono font-bold outline-none text-xs pr-6"
+                              placeholder="%"
+                            />
+                            <span className="absolute right-2 top-1.5 text-[10px] text-emerald-400/80 font-mono font-bold">%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* เพดานรับต่อเลข */}
+                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+                  <label className="text-slate-400 whitespace-nowrap font-medium">เพดานรับสูงสุดต่อเลข (฿):</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={setting.default_limit_per_number ?? ''}
+                    onKeyDown={(e) => { if (e.key === '.' || e.key === ',') e.preventDefault(); }}
+                    onChange={(e) => handleSettingChange(setting.lottery_id, 'default_limit_per_number', e.target.value)}
+                    className="w-36 bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-1.5 text-slate-100 font-mono font-bold outline-none text-right text-xs"
+                  />
                 </div>
               </div>
             ))}
@@ -588,7 +610,7 @@ export default function RoomPage({ onLeaveRoom }) {
               <div>
                 <h3 className="text-sm font-bold text-slate-100 flex items-center space-x-1.5">
                   <ShieldAlert className="w-4 h-4 text-orange-400" />
-                  <span>กฎเลขอั้น / เลขจ่ายครึ่ง / จำกัดยอดรับ</span>
+                  <span>จัดการเลขอั้น</span>
                 </h3>
                 <p className="text-[11px] text-slate-400">ควบคุมความเสี่ยงของห้องแต่ละงวด</p>
               </div>
@@ -643,7 +665,7 @@ export default function RoomPage({ onLeaveRoom }) {
       {showAddRule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-md bg-obsidian-900 border border-amber-500/30 rounded-3xl p-6 shadow-2xl animate-scale-up text-slate-100">
-            <h3 className="text-base font-bold text-slate-100 mb-4">เพิ่มกฎเลขอั้น / เลขจ่ายครึ่ง</h3>
+            <h3 className="text-base font-bold text-slate-100 mb-4">เพิ่มเลขอั้น</h3>
             <form onSubmit={handleAddRule} className="space-y-3.5 text-xs">
               <div>
                 <label className="text-slate-300 block mb-1 font-medium">งวดสลาก</label>

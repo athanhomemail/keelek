@@ -163,7 +163,10 @@ export async function submitBill(req, res) {
     );
     const settings = settingsRows.length ? settingsRows[0] : {
       rate_3top: 900, rate_3tod: 130, rate_2top: 95, rate_2bottom: 95,
-      rate_run_top: 3.2, rate_run_bottom: 4.2, commission_rate: 10, default_limit_per_number: 5000
+      rate_run_top: 3.2, rate_run_bottom: 4.2,
+      comm_3top: 8, comm_3tod: 8, comm_2top: 5, comm_2bottom: 5,
+      comm_run_top: 5, comm_run_bottom: 5,
+      commission_rate: 10, default_limit_per_number: 5000
     };
 
     // 3. ดึงกฎพิเศษ (อั้น, จ่ายครึ่ง, ลิมิต)
@@ -178,17 +181,44 @@ export async function submitBill(req, res) {
     const processedItems = [];
     const quotaExceeded = [];
 
+    // Helper คิด % ส่วนแบ่งตามประเภทหวย
+    const getCommRate = (bType) => {
+      switch (bType) {
+        case '3TOP': return Number(settings.comm_3top ?? settings.commission_rate ?? 8);
+        case '3TOD': return Number(settings.comm_3tod ?? settings.commission_rate ?? 8);
+        case '2TOP': return Number(settings.comm_2top ?? settings.commission_rate ?? 5);
+        case '2BOTTOM': return Number(settings.comm_2bottom ?? settings.commission_rate ?? 5);
+        case 'RUN_TOP': return Number(settings.comm_run_top ?? settings.commission_rate ?? 5);
+        case 'RUN_BOTTOM': return Number(settings.comm_run_bottom ?? settings.commission_rate ?? 5);
+        default: return Number(settings.commission_rate ?? 5);
+      }
+    };
+
     // 4. ตรวจสอบและคำนวณแต่ละรายการ
     for (const item of items) {
-      const { number, betType, amount } = item;
-      const numAmount = Number(amount);
-      if (numAmount <= 0) continue;
+      const number = String(item.number || '').trim();
+      const betType = item.betType;
+      const numAmount = Number(item.amount);
 
-      const baseRate = getRateForBetType(settings, betType);
+      if (!number || !betType || isNaN(numAmount) || numAmount <= 0) continue;
+
+      // หาอัตราจ่ายตามประเภท
+      let baseRate = 0;
+      switch (betType) {
+        case '3TOP': baseRate = Number(settings.rate_3top || 900); break;
+        case '3TOD': baseRate = Number(settings.rate_3tod || 130); break;
+        case '2TOP': baseRate = Number(settings.rate_2top || 95); break;
+        case '2BOTTOM': baseRate = Number(settings.rate_2bottom || 95); break;
+        case 'RUN_TOP': baseRate = Number(settings.rate_run_top || 3.2); break;
+        case 'RUN_BOTTOM': baseRate = Number(settings.rate_run_bottom || 4.2); break;
+        default: baseRate = 0;
+      }
+
+      // ตรวจสอบกฎเลขอั้น / เลขจ่ายครึ่ง / จำกัดยอดรับ
       let effectiveRate = baseRate;
-      let isBlocked = false;
       let isHalfPay = false;
-      let limit = Number(settings.default_limit_per_number);
+      let limit = Number(settings.default_limit_per_number || 5000);
+      let isBlocked = false;
 
       const matchedRule = rules.find(r => r.number === number && (r.bet_type === betType || r.bet_type === 'ALL'));
       if (matchedRule) {
@@ -249,9 +279,13 @@ export async function submitBill(req, res) {
       return res.status(400).json({ success: false, message: 'ไม่มีรายการตัวเลขที่ถูกต้อง' });
     }
 
-    // 5. คำนวณส่วนแบ่งคอมมิชชั่น
-    const commissionRate = Number(settings.commission_rate || 10);
-    const commissionAmount = (totalAmount * commissionRate) / 100;
+    // 5. คำนวณส่วนแบ่งคอมมิชชั่นแยกตามประเภทหวย
+    let commissionAmount = 0;
+    for (const item of processedItems) {
+      const commRate = getCommRate(item.betType);
+      const itemComm = (item.amount * commRate) / 100;
+      commissionAmount += itemComm;
+    }
     const netDealerAmount = totalAmount - commissionAmount;
 
     // 6. สร้างเลขบิล

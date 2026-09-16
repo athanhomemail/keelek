@@ -5,7 +5,8 @@ import {
   User, CheckCircle2, AlertCircle, Building2, CreditCard, Mail, Phone, Lock
 } from 'lucide-react';
 
-const THAI_BANKS = [
+const ACCOUNT_OPTIONS = [
+  'พร้อมเพย์',
   'กสิกรไทย (KBANK)',
   'ไทยพาณิชย์ (SCB)',
   'กรุงเทพ (BBL)',
@@ -35,9 +36,8 @@ export default function AuthPage() {
   const [regDisplayName, setRegDisplayName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
-  const [regBankName, setRegBankName] = useState(THAI_BANKS[0]);
-  const [regAccountNo, setRegAccountNo] = useState('');
-  const [regPromptpay, setRegPromptpay] = useState('');
+  const [regAccountType, setRegAccountType] = useState(ACCOUNT_OPTIONS[0]); // default 'พร้อมเพย์'
+  const [regAccountNumber, setRegAccountNumber] = useState('');
 
   // Handle Login Submit
   const handleLoginSubmit = async (e) => {
@@ -60,8 +60,13 @@ export default function AuthPage() {
     setError(null);
     setSuccessMsg(null);
 
-    if (regPassword !== regConfirmPassword) {
-      setError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+    if (!regUsername.trim()) {
+      setError('กรุณากรอกชื่อผู้ใช้ (Username)');
+      return;
+    }
+
+    if (!regPassword) {
+      setError('กรุณากรอกรหัสผ่าน');
       return;
     }
 
@@ -70,16 +75,37 @@ export default function AuthPage() {
       return;
     }
 
+    if (!regConfirmPassword) {
+      setError('กรุณายืนยันรหัสผ่าน');
+      return;
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      setError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
+    if (!regDisplayName.trim()) {
+      setError('กรุณากรอกชื่อที่จะเอาไว้แสดง');
+      return;
+    }
+
+    if (!regAccountNumber.trim()) {
+      setError(`กรุณากรอก${regAccountType === 'พร้อมเพย์' ? 'พร้อมเพย์' : 'เลขที่บัญชี'}`);
+      return;
+    }
+
     setLoading(true);
+    const isPromptPay = regAccountType === 'พร้อมเพย์';
     const res = await register({
       username: regUsername.trim(),
       password: regPassword,
       displayName: regDisplayName.trim(),
       email: regEmail.trim() || null,
       phone: regPhone.trim() || null,
-      bankName: regBankName,
-      accountNo: regAccountNo.trim() || null,
-      promptpay: regPromptpay.trim() || null
+      bankName: isPromptPay ? 'พร้อมเพย์' : regAccountType,
+      accountNo: regAccountNumber.trim(),
+      promptpay: isPromptPay ? regAccountNumber.trim() : null
     });
     setLoading(false);
 
@@ -250,7 +276,7 @@ export default function AuthPage() {
                   {/* Leader */}
                   <button
                     type="button"
-                    onClick={() => handleQuickLogin({ id: 2, username: 'leader1' })}
+                    onClick={() => handleQuickLogin({ id: 3, username: 'leader1' })}
                     className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-left transition-all group"
                   >
                     <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-300">
@@ -292,11 +318,11 @@ export default function AuthPage() {
 
           {/* ================= TAB 2: REGISTER ================= */}
           {tab === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-3.5 max-h-[65vh] overflow-y-auto pr-1">
+            <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
               {/* Username */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  ชื่อผู้ใช้ (Username) *
+                  ชื่อผู้ใช้ (Username) <span className="text-red-500 font-bold ml-0.5">*</span>
                 </label>
                 <input
                   type="text"
@@ -312,7 +338,7 @@ export default function AuthPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    รหัสผ่าน *
+                    รหัสผ่าน <span className="text-red-500 font-bold ml-0.5">*</span>
                   </label>
                   <input
                     type="password"
@@ -325,7 +351,7 @@ export default function AuthPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    ยืนยันรหัสผ่าน *
+                    ยืนยันรหัสผ่าน <span className="text-red-500 font-bold ml-0.5">*</span>
                   </label>
                   <input
                     type="password"
@@ -341,7 +367,7 @@ export default function AuthPage() {
               {/* Display Name */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  ชื่อที่จะเอาไว้แสดง *
+                  ชื่อที่จะเอาไว้แสดง <span className="text-red-500 font-bold ml-0.5">*</span>
                 </label>
                 <input
                   type="text"
@@ -353,11 +379,11 @@ export default function AuthPage() {
                 />
               </div>
 
-              {/* Email & Phone */}
+              {/* Email & Phone (Optional) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    อีเมล (Email)
+                    อีเมล (ถ้ามี)
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
@@ -375,7 +401,7 @@ export default function AuthPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    เบอร์โทร (ไม่บังคับ / ไม่ส่ง OTP)
+                    เบอร์โทร (ถ้ามี)
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
@@ -392,54 +418,63 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              {/* Bank & Account No */}
+              {/* Account Selection & Number */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    เลือกธนาคาร
+                    เลือกบัญชี <span className="text-red-500 font-bold ml-0.5">*</span>
                   </label>
-                  <select
-                    value={regBankName}
-                    onChange={(e) => setRegBankName(e.target.value)}
-                    className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl px-3 py-2.5 text-sm text-slate-100 outline-none"
-                  >
-                    {THAI_BANKS.map((b) => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                      <Building2 className="w-3.5 h-3.5" />
+                    </div>
+                    <select
+                      value={regAccountType}
+                      onChange={(e) => setRegAccountType(e.target.value)}
+                      className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-100 outline-none"
+                    >
+                      {ACCOUNT_OPTIONS.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    เลขที่บัญชี
+                    {regAccountType === 'พร้อมเพย์' ? 'พร้อมเพย์' : 'เลขที่บัญชี'}{' '}
+                    <span className="text-red-500 font-bold ml-0.5">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={regAccountNo}
-                    onChange={(e) => setRegAccountNo(e.target.value)}
-                    placeholder="เช่น 123-4-56789-0"
-                    className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                      <CreditCard className="w-3.5 h-3.5" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={regAccountNumber}
+                      onChange={(e) => setRegAccountNumber(e.target.value)}
+                      placeholder={
+                        regAccountType === 'พร้อมเพย์'
+                          ? 'เบอร์โทร หรือ เลขบัตรประชาชน'
+                          : 'เช่น 123-4-56789-0'
+                      }
+                      className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none"
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* PromptPay */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  พร้อมเพย์ (ถ้ามี)
-                </label>
-                <input
-                  type="text"
-                  value={regPromptpay}
-                  onChange={(e) => setRegPromptpay(e.target.value)}
-                  placeholder="เบอร์โทรหรือเลขบัตรประชาชนสำหรับพร้อมเพย์"
-                  className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none"
-                />
               </div>
 
               <button
                 type="submit"
-                disabled={loading || !regUsername || !regPassword || !regDisplayName}
+                disabled={
+                  loading ||
+                  !regUsername.trim() ||
+                  !regPassword ||
+                  !regConfirmPassword ||
+                  !regDisplayName.trim() ||
+                  !regAccountNumber.trim()
+                }
                 className="w-full py-3.5 mt-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:opacity-95 disabled:opacity-50 text-obsidian-950 font-bold rounded-xl shadow-lg shadow-amber-500/25 text-sm transition-all flex items-center justify-center space-x-2"
               >
                 <UserPlus className="w-4 h-4" />

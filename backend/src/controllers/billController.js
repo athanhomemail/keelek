@@ -302,7 +302,10 @@ export async function updateBill(req, res) {
     );
     const settings = settingsRows.length ? settingsRows[0] : {
       rate_3top: 900, rate_3tod: 130, rate_2top: 95, rate_2bottom: 95,
-      rate_run_top: 3.2, rate_run_bottom: 4.2, commission_rate: 10, default_limit_per_number: 5000
+      rate_run_top: 3.2, rate_run_bottom: 4.2,
+      comm_3top: 8, comm_3tod: 8, comm_2top: 5, comm_2bottom: 5,
+      comm_run_top: 5, comm_run_bottom: 5,
+      commission_rate: 10, default_limit_per_number: 5000
     };
 
     // 6. ดึงกฎพิเศษ (อั้น, จ่ายครึ่ง)
@@ -322,6 +325,18 @@ export async function updateBill(req, res) {
         case 'RUN_TOP': return Number(settings.rate_run_top);
         case 'RUN_BOTTOM': return Number(settings.rate_run_bottom);
         default: return 0;
+      }
+    };
+
+    const getCommRate = (betType) => {
+      switch (betType) {
+        case '3TOP': return Number(settings.comm_3top ?? settings.commission_rate ?? 8);
+        case '3TOD': return Number(settings.comm_3tod ?? settings.commission_rate ?? 8);
+        case '2TOP': return Number(settings.comm_2top ?? settings.commission_rate ?? 5);
+        case '2BOTTOM': return Number(settings.comm_2bottom ?? settings.commission_rate ?? 5);
+        case 'RUN_TOP': return Number(settings.comm_run_top ?? settings.commission_rate ?? 5);
+        case 'RUN_BOTTOM': return Number(settings.comm_run_bottom ?? settings.commission_rate ?? 5);
+        default: return Number(settings.commission_rate ?? 5);
       }
     };
 
@@ -363,9 +378,13 @@ export async function updateBill(req, res) {
       return res.status(400).json({ success: false, message: 'ไม่มีรายการตัวเลขที่ถูกต้อง' });
     }
 
-    // 7. คำนวณค่าคอมมิชชั่น และยอดส่งเจ้ามือ
-    const commRate = Number(settings.commission_rate || 10);
-    const commissionAmount = (totalAmount * commRate) / 100;
+    // 7. คำนวณค่าคอมมิชชั่น และยอดส่งเจ้ามือ แยกตามประเภทหวย
+    let commissionAmount = 0;
+    for (const item of processedItems) {
+      const commRate = getCommRate(item.betType);
+      const itemComm = (item.amount * commRate) / 100;
+      commissionAmount += itemComm;
+    }
     const netDealerAmount = totalAmount - commissionAmount;
 
     // 8. ลบรายการเก่าของบิลนี้ และเพิ่มรายการใหม่

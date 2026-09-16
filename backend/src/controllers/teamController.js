@@ -11,7 +11,7 @@ export async function getTeamStats(req, res) {
 
     // 1. ดึงข้อมูลห้องและหัวหน้า
     const [rooms] = await pool.query(
-      `SELECT r.id, r.code, r.name, r.leader_id, r.status, r.expires_at,
+      `SELECT r.id, r.code, r.name, r.leader_id, r.status, r.expires_at, r.created_at,
               u.display_name as leader_name, u.phone as leader_phone, u.profile_pic_url as leader_pic
        FROM rooms r
        JOIN users u ON r.leader_id = u.id
