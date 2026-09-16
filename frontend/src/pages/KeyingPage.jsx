@@ -1277,7 +1277,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between border-t border-slate-800 pt-4 gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-800 pt-4 gap-3">
           {/* Paid / Unpaid Toggle */}
           <div className="flex items-center space-x-2">
             <span className="text-xs text-slate-300">สถานะเงิน:</span>
@@ -1295,15 +1295,16 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
           </div>
 
           {/* Actions & Total */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-right mr-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+            {/* Total Amount (Right-aligned) */}
+            <div className="text-right sm:mr-2">
               <span className="text-[11px] text-slate-400 block">ยอดรวมทั้งสิ้น</span>
               <span className="text-xl font-bold font-mono text-amber-400">
                 {totalAmount.toLocaleString()} <span className="text-xs font-sans text-slate-300">บาท</span>
               </span>
             </div>
 
-            {/* Separate Preview Button */}
+            {/* Separate Preview Button (Full width on mobile) */}
             <button
               type="button"
               disabled={!stagedItems.length || hasUnacceptedItems || !customerName.trim() || isValidatingQuota}
@@ -1319,13 +1320,13 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
                   ? 'กำลังตรวจสอบโควตา...'
                   : 'ดูตัวอย่างบิล'
               }
-              className="py-3 px-4 bg-obsidian-800 hover:bg-obsidian-750 disabled:opacity-40 disabled:cursor-not-allowed text-amber-300 hover:text-amber-200 border border-amber-500/40 font-bold rounded-2xl text-xs sm:text-sm transition-all flex items-center space-x-1.5 shadow-md active:scale-98"
+              className="w-full sm:w-auto py-3 px-4 bg-obsidian-800 hover:bg-obsidian-750 disabled:opacity-40 disabled:cursor-not-allowed text-amber-300 hover:text-amber-200 border border-amber-500/40 font-bold rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center space-x-1.5 shadow-md active:scale-98"
             >
               <Receipt className="w-4 h-4 text-amber-400" />
               <span>ดูตัวอย่าง (Preview)</span>
             </button>
 
-            {/* Confirm / Submit / Save Edit Button */}
+            {/* Confirm / Submit / Save Edit Button (Full width on mobile) */}
             <button
               type="button"
               disabled={submitting || isValidatingQuota || !stagedItems.length || hasUnacceptedItems || !customerName.trim()}
@@ -1343,7 +1344,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
                   ? 'บันทึกการแก้ไขบิล'
                   : 'ยืนยันออกบิล'
               }
-              className="py-3 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-obsidian-950 font-bold rounded-2xl shadow-lg shadow-amber-500/30 text-xs sm:text-sm transition-all active:scale-98 flex items-center space-x-1.5"
+              className="w-full sm:w-auto py-3 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-obsidian-950 font-bold rounded-2xl shadow-lg shadow-amber-500/30 text-xs sm:text-sm transition-all active:scale-98 flex items-center justify-center space-x-1.5"
             >
               <CheckCircle className="w-4 h-4" />
               <span>
