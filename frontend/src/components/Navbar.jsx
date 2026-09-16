@@ -62,16 +62,16 @@ export default function Navbar({ activePage, setActivePage, onOpenNotifications,
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           
           {/* Brand Logo */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActivePage(role === 'GUEST' ? 'rooms' : 'keying')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-400 p-[1px] shadow-lg shadow-amber-500/20">
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onClick={() => setActivePage(role === 'GUEST' ? 'rooms' : 'keying')}>
+            <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-400 p-[1px] shadow-lg shadow-amber-500/20">
               <div className="w-full h-full bg-obsidian-950 rounded-[11px] flex items-center justify-center">
                 <Keyboard className="w-5 h-5 text-amber-400" />
               </div>
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-bold text-lg gold-gradient-text tracking-wide">Kee-Lek</span>
-                <span className="text-xs bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded font-semibold border border-amber-500/20">
+                <span className="font-bold text-base sm:text-lg gold-gradient-text tracking-wide">Kee-Lek</span>
+                <span className="hidden sm:inline text-xs bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded font-semibold border border-amber-500/20">
                   คีย์เลข
                 </span>
               </div>
@@ -199,15 +199,15 @@ export default function Navbar({ activePage, setActivePage, onOpenNotifications,
                   {role}
                 </span>
 
-                {/* Small Logout Button (Right-aligned) */}
+                {/* Small Logout Button (Right-aligned, icon-only on mobile) */}
                 <button
                   type="button"
                   onClick={handleLogout}
                   title="ออกจากระบบ"
-                  className="inline-flex items-center space-x-1 text-[10px] text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 px-1.5 py-0.5 rounded-md transition-all active:scale-95 group font-medium"
+                  className="inline-flex items-center space-x-1 text-[10px] text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 p-1 sm:px-1.5 sm:py-0.5 rounded-md transition-all active:scale-95 group font-medium"
                 >
                   <LogOut className="w-2.5 h-2.5 transition-transform group-hover:translate-x-0.5" />
-                  <span>ออกจากระบบ</span>
+                  <span className="hidden sm:inline">ออกจากระบบ</span>
                 </button>
               </div>
             </div>
