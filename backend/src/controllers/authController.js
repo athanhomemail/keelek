@@ -13,28 +13,21 @@ function generateToken(user) {
 
 export async function login(req, res) {
   try {
-    const { username, password, userId } = req.body;
+    const { username, password } = req.body;
 
-    let user;
-    if (userId) {
-      // Simulator quick login
-      const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-      if (!rows.length) return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้' });
-      user = rows[0];
-    } else {
-      if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
-      }
-      const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-      if (!rows.length) {
-        return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-      }
-      user = rows[0];
-      // For development, allow password bypass if matches or equals demo
-      const isValid = await bcrypt.compare(password, user.password).catch(() => false);
-      if (!isValid && password !== 'admin123' && password !== '123456') {
-        return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
-      }
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน' });
+    }
+
+    const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username.trim()]);
+    if (!rows.length) {
+      return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
+    }
+
+    const user = rows[0];
+    const isValid = await bcrypt.compare(password, user.password).catch(() => false);
+    if (!isValid) {
+      return res.status(401).json({ success: false, message: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
     }
 
     if (user.status === 'BANNED') {

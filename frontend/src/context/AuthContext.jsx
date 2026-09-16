@@ -46,7 +46,6 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    fetchSimulatorUsers();
     if (token) {
       fetchProfile();
     } else {

@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useAuth } from './context/AuthContext.jsx';
 import { useSocket } from './context/SocketContext.jsx';
 import { Keyboard } from 'lucide-react';
-import RoleSwitcher from './components/RoleSwitcher.jsx';
 import Navbar from './components/Navbar.jsx';
 import NotificationDrawer from './components/NotificationDrawer.jsx';
 
@@ -95,10 +94,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-obsidian-950 text-slate-100 font-sans flex flex-col selection:bg-amber-500 selection:text-obsidian-950">
       
-      {/* 1. Simulator Quick Role Bar (Optional for testing) */}
-      <RoleSwitcher />
-
-      {/* 2. Main Navbar */}
+      {/* 1. Main Navbar */}
       <Navbar 
         activePage={activePage} 
         setActivePage={setActivePage}
