@@ -943,7 +943,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
               <div className="flex items-center space-x-2">
                 <h3 className="font-bold text-sm sm:text-base text-slate-100">แผงคีย์ตัวเลข</h3>
                 <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                  {keyingMode === 'MANUAL' ? 'คีย์ทีละตัว' : 'ช่วยกรอกด่วน'}
+                  {keyingMode === 'MANUAL' ? 'คีย์ทีละตัว' : 'กรอกด่วน'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 mt-0.5">
@@ -977,7 +977,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
               }`}
             >
               <Sparkles className={`w-3.5 h-3.5 ${keyingMode === 'QUICK' ? 'text-obsidian-950' : 'text-amber-400'}`} />
-              <span>⚡ แผงช่วยกรอกด่วน (รูด/19 ประตู)</span>
+              <span>กรอกด่วน</span>
             </button>
           </div>
         </div>
