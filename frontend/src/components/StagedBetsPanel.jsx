@@ -290,14 +290,12 @@ export default function StagedBetsPanel({
       if (hasPromptPay) {
         text += `\n\n🏦 ช่องทางชำระเงิน (พร้อมเพย์):\n`;
         text += `   หมายเลข: ${formatPromptPayDisplay(user.promptpay)}\n`;
-        text += `   ชื่อบัญชี: ${user.real_name || user.display_name}\n`;
-        text += `   ยอดโอน: ${totalAmount.toLocaleString()} บาท`;
+        text += `   ชื่อบัญชี: ${user.real_name || user.display_name}`;
       } else if (hasBank) {
         text += `\n\n🏦 ช่องทางชำระเงิน (บัญชีธนาคาร):\n`;
         text += `   ธนาคาร: ${user.bank_name}\n`;
         text += `   เลขบัญชี: ${user.account_no}\n`;
-        text += `   ชื่อบัญชี: ${user.real_name || user.display_name}\n`;
-        text += `   ยอดโอน: ${totalAmount.toLocaleString()} บาท`;
+        text += `   ชื่อบัญชี: ${user.real_name || user.display_name}`;
       }
     }
 
@@ -907,13 +905,19 @@ export default function StagedBetsPanel({
             {showPaymentInfo && (hasPromptPay || hasBank) && (
               <div className="border-t border-dashed border-slate-700/80 mt-5 pt-4">
                 {hasPromptPay ? (
-                  /* 1. PromptPay Dynamic Thai QR Payment Card */
-                  <div className="bg-obsidian-900/90 rounded-2xl p-4 border border-amber-500/30 shadow-lg flex flex-col sm:flex-row items-center gap-4">
+                  /* 1. PromptPay Dynamic Thai QR Payment Card (Centered, No Redundant Amount) */
+                  <div className="bg-obsidian-900/90 rounded-2xl p-5 border border-amber-500/30 shadow-lg flex flex-col items-center justify-center text-center">
+                    {/* Badge */}
+                    <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold mb-3">
+                      <QrCode className="w-3.5 h-3.5 text-blue-400" />
+                      <span>สแกนจ่ายผ่านพร้อมเพย์</span>
+                    </div>
+
                     {/* QR Code Container with white quiet zone */}
-                    <div className="bg-white p-2.5 rounded-2xl shadow-md shrink-0 flex flex-col items-center justify-center">
+                    <div className="bg-white p-2.5 rounded-2xl shadow-md flex flex-col items-center justify-center mb-3">
                       <QRCodeCanvas
                         value={promptPayPayload}
-                        size={128}
+                        size={136}
                         level="M"
                         includeMargin={true}
                         bgColor="#ffffff"
@@ -925,73 +929,55 @@ export default function StagedBetsPanel({
                       </div>
                     </div>
 
-                    {/* PromptPay details */}
-                    <div className="flex-1 text-center sm:text-left min-w-0">
-                      <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[11px] font-bold mb-1.5">
-                        <QrCode className="w-3.5 h-3.5 text-blue-400" />
-                        <span>สแกนจ่ายผ่านพร้อมเพย์</span>
-                      </div>
-
-                      <div className="text-xs text-slate-300 mt-1">
+                    {/* PromptPay details - Centered */}
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-300">
                         ชื่อบัญชีผู้รับ:{' '}
                         <strong className="text-slate-100 font-bold text-sm">
                           {user?.real_name || user?.display_name}
                         </strong>
                       </div>
 
-                      <div className="text-xs text-slate-300 mt-1">
+                      <div className="text-xs text-slate-300">
                         พร้อมเพย์:{' '}
-                        <span className="font-mono font-bold text-amber-400 text-sm">
+                        <span className="font-mono font-bold text-amber-400 text-base">
                           {formatPromptPayDisplay(user?.promptpay)}
                         </span>
                       </div>
 
-                      <div className="mt-2.5 inline-flex items-baseline space-x-1.5 bg-obsidian-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                        <span className="text-xs text-slate-400">ยอดเงินระบุอัตโนมัติ:</span>
-                        <span className="font-mono font-black text-amber-400 text-base">
-                          {totalAmount.toLocaleString()}
-                        </span>
-                        <span className="text-xs text-slate-400">บาท</span>
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-                        💡 สแกนผ่านแอปธนาคารใดก็ได้ ยอดเงินจะถูกกรอกให้อัตโนมัติทันที
+                      <p className="text-[10px] text-slate-400 pt-1 leading-relaxed">
+                        💡 สแกนผ่านแอปธนาคาร ยอดเงินระบุให้อัตโนมัติ
                       </p>
                     </div>
                   </div>
                 ) : (
-                  /* 2. Bank Account Transfer Card */
-                  <div className="bg-obsidian-900/90 rounded-2xl p-4 border border-amber-500/30 shadow-lg">
-                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-800">
-                      <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
-                        <Building2 className="w-3.5 h-3.5 text-amber-400" />
-                        <span>ช่องทางโอนเงินผ่านบัญชีธนาคาร</span>
-                      </div>
-                      <span className="text-xs font-bold text-slate-200">
-                        {user?.bank_name}
+                  /* 2. Bank Account Transfer Card (Centered, No Redundant Amount) */
+                  <div className="bg-obsidian-900/90 rounded-2xl p-5 border border-amber-500/30 shadow-lg flex flex-col items-center justify-center text-center">
+                    {/* Badge */}
+                    <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold mb-2">
+                      <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>ช่องทางโอนเงินผ่านบัญชีธนาคาร</span>
+                    </div>
+
+                    {/* Bank Name */}
+                    <div className="text-sm font-bold text-slate-200 mb-3">
+                      {user?.bank_name}
+                    </div>
+
+                    {/* Account Number Box */}
+                    <div className="w-full max-w-xs bg-obsidian-950 p-3.5 rounded-2xl border border-slate-800 flex flex-col items-center justify-center mb-2.5">
+                      <span className="text-[11px] text-slate-400 block mb-0.5">เลขที่บัญชี</span>
+                      <span className="font-mono font-black text-xl text-amber-400 tracking-wider">
+                        {user?.account_no}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 bg-obsidian-950 p-3 rounded-xl border border-slate-800">
-                      <div>
-                        <span className="text-[11px] text-slate-400 block mb-0.5">เลขที่บัญชี</span>
-                        <span className="font-mono font-black text-lg text-amber-400 tracking-wider">
-                          {user?.account_no}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[11px] text-slate-400 block mb-0.5">ชื่อเจ้าของบัญชี</span>
-                        <span className="font-semibold text-sm text-slate-100">
-                          {user?.real_name || user?.display_name}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="text-slate-400">ยอดเงินที่ต้องโอน:</span>
-                      <span className="font-mono font-bold text-slate-100 text-sm">
-                        {totalAmount.toLocaleString()} บาท
-                      </span>
+                    {/* Account Owner Name */}
+                    <div className="text-xs text-slate-300">
+                      ชื่อเจ้าของบัญชี:{' '}
+                      <strong className="text-slate-100 font-semibold text-sm">
+                        {user?.real_name || user?.display_name}
+                      </strong>
                     </div>
                   </div>
                 )}
