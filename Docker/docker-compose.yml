@@ -10,7 +10,7 @@ services:
       MYSQL_USER: keelek_user
       MYSQL_PASSWORD: keelek_password
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_kuayrai_data:/var/lib/mysql
       - ../SQLSchema:/docker-entrypoint-initdb.d:ro
