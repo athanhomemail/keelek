@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useModal } from '../context/ModalContext.jsx';
 import { 
-  Keyboard, LogIn, UserPlus, Eye, EyeOff, Shield, Crown, UserCheck, 
+  Keyboard, LogIn, UserPlus, Eye, EyeOff,
   User, CheckCircle2, AlertCircle, Building2, CreditCard, Mail, Phone, Lock
 } from 'lucide-react';
 
@@ -18,7 +19,8 @@ const ACCOUNT_OPTIONS = [
 ];
 
 export default function AuthPage() {
-  const { login, register, switchUser, simulatorUsers } = useAuth();
+  const { login, register } = useAuth();
+  const { showAlert } = useModal();
   const [tab, setTab] = useState('login'); // 'login' | 'register'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,13 +47,46 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
-    setLoading(true);
 
+    if (!loginUsername.trim()) {
+      const msg = 'กรุณากรอกชื่อผู้ใช้ (Username)';
+      setError(msg);
+      showAlert({
+        type: 'warning',
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: msg,
+        confirmText: 'ตกลง'
+      });
+      return;
+    }
+
+    if (!loginPassword) {
+      const msg = 'กรุณากรอกรหัสผ่าน (Password)';
+      setError(msg);
+      showAlert({
+        type: 'warning',
+        title: 'ข้อมูลไม่ครบถ้วน',
+        message: msg,
+        confirmText: 'ตกลง'
+      });
+      return;
+    }
+
+    setLoading(true);
     const res = await login(loginUsername.trim(), loginPassword);
     setLoading(false);
 
     if (!res.success) {
-      setError(res.message);
+      const errorMsg = res.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง';
+      setError(errorMsg);
+      setLoginPassword(''); // เคลียร์รหัสผ่านให้กรอกใหม่
+      showAlert({
+        type: 'error',
+        title: 'เข้าสู่ระบบไม่สำเร็จ',
+        message: errorMsg,
+        subtitle: 'กรุณาตรวจสอบชื่อผู้ใช้และรหัสผ่าน แล้วลองใหม่อีกครั้ง',
+        confirmText: 'ลองใหม่อีกครั้ง'
+      });
     }
   };
 
@@ -121,13 +156,6 @@ export default function AuthPage() {
     }
   };
 
-  // Quick Demo Login
-  const handleQuickLogin = (u) => {
-    setLoginUsername(u.username);
-    setLoginPassword('123456');
-    switchUser(u.id);
-  };
-
   return (
     <div className="min-h-screen bg-obsidian-950 flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden selection:bg-amber-500 selection:text-obsidian-950 font-sans text-slate-100">
       
@@ -187,9 +215,14 @@ export default function AuthPage() {
 
           {/* Feedback Messages */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-start space-x-2.5 animate-shake">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">{error}</span>
+            <div className="mb-5 p-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-200 text-sm flex items-start space-x-3 animate-shake shadow-lg shadow-red-500/10">
+              <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-red-300 text-xs">เข้าสู่ระบบไม่สำเร็จ</div>
+                <div className="text-xs text-red-200/90 mt-0.5 leading-relaxed">{error}</div>
+              </div>
             </div>
           )}
 
@@ -215,9 +248,14 @@ export default function AuthPage() {
                     type="text"
                     required
                     value={loginUsername}
-                    onChange={(e) => setLoginUsername(e.target.value)}
-                    placeholder="กรอกชื่อผู้ใช้ เช่น admin"
-                    className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl pl-10 pr-3.5 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
+                    onChange={(e) => {
+                      setLoginUsername(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    placeholder="กรอกชื่อผู้ใช้"
+                    className={`w-full bg-obsidian-950 border ${
+                      error ? 'border-red-500/70 focus:border-red-400' : 'border-slate-700/80 focus:border-amber-400'
+                    } rounded-xl pl-10 pr-3.5 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors`}
                   />
                 </div>
               </div>
@@ -234,9 +272,14 @@ export default function AuthPage() {
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="กรอกรหัสผ่าน (ค่าเริ่มต้น: 123456)"
-                    className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl pl-10 pr-10 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
+                    onChange={(e) => {
+                      setLoginPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    placeholder="กรอกรหัสผ่าน"
+                    className={`w-full bg-obsidian-950 border ${
+                      error ? 'border-red-500/70 focus:border-red-400' : 'border-slate-700/80 focus:border-amber-400'
+                    } rounded-xl pl-10 pr-10 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors`}
                   />
                   <button
                     type="button"
@@ -256,36 +299,6 @@ export default function AuthPage() {
                 <LogIn className="w-4 h-4" />
                 <span>{loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}</span>
               </button>
-
-              {/* Quick Demo Logins Section */}
-              <div className="pt-5 mt-5 border-t border-slate-800">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    ⚡ เลือกล็อกอินบัญชีทดสอบด่วน:
-                  </span>
-                  <span className="text-[10px] text-amber-500/80 font-mono">รหัสผ่าน: 123456</span>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2">
-                  {/* Admin */}
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin({ id: 1, username: 'admin' })}
-                    className="p-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-left transition-all group flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center space-x-1.5 text-xs font-bold text-purple-300">
-                        <Crown className="w-3.5 h-3.5 text-purple-400" />
-                        <span>Admin (ผู้ดูแลระบบ)</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">ชื่อผู้ใช้: admin • รหัสผ่าน: 123456</p>
-                    </div>
-                    <span className="text-xs text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                      เข้าสู่ระบบ →
-                    </span>
-                  </button>
-                </div>
-              </div>
             </form>
           )}
 
