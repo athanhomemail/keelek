@@ -955,13 +955,13 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
           </div>
 
           {/* Mode Switch Tabs */}
-          <div className="flex bg-obsidian-950 p-1 rounded-2xl border border-slate-800 shadow-inner self-start sm:self-auto">
+          <div className="flex w-full sm:w-auto bg-obsidian-950 p-1 rounded-2xl border border-slate-800 shadow-inner sm:self-auto">
             <button
               type="button"
               onClick={() => setKeyingMode('MANUAL')}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3 py-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs font-bold transition-all ${
                 keyingMode === 'MANUAL'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-obsidian-950 shadow-md shadow-amber-500/20 scale-[1.02]'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-obsidian-950 shadow-md shadow-amber-500/20 scale-[1.01] sm:scale-[1.02]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-obsidian-900'
               }`}
             >
@@ -970,9 +970,9 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
             <button
               type="button"
               onClick={() => setKeyingMode('QUICK')}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center space-x-1.5 px-3 py-2 sm:px-3.5 sm:py-1.5 rounded-xl text-xs font-bold transition-all ${
                 keyingMode === 'QUICK'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-obsidian-950 shadow-md shadow-amber-500/20 scale-[1.02]'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-obsidian-950 shadow-md shadow-amber-500/20 scale-[1.01] sm:scale-[1.02]'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-obsidian-900'
               }`}
             >
