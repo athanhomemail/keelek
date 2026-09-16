@@ -989,11 +989,8 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
           {/* Bet Type Selection Grouped by Digits */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-slate-300 font-semibold flex items-center space-x-1.5">
-                <span>ประเภทที่ต้องการคีย์:</span>
-                <span className="text-[11px] font-normal text-amber-400">
-                  (เลือกพร้อมกันได้ เช่น 2 บน + 2 ล่าง)
-                </span>
+              <label className="text-xs text-slate-300 font-semibold">
+                ประเภทที่ต้องการคีย์:
               </label>
               <span className="text-[11px] text-slate-400 bg-obsidian-950 px-2 py-0.5 rounded-full border border-slate-800">
                 หมวดปัจจุบัน: <strong className="text-amber-300">{currentCategoryObj.name} ({maxDigits} หลัก)</strong>
