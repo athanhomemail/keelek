@@ -52,11 +52,10 @@ mkdir -p /var/www/keelek
 cd /var/www/keelek
 ```
 
-**วิธีนำโค้ดขึ้น (เลือกอย่างใดอย่างหนึ่ง):**
-* **วิธี A (แนะนำ - ผ่าน Git):**
+* **วิธีนำโค้ดขึ้น (ผ่าน GitHub):**
   ```bash
-  # ถ้าโค้ดอยู่บน GitHub หรือ GitLab
-  git clone <URL_GIT_REPO> /var/www/keelek
+  # รันบน VPS เพื่อ Clone โค้ดลงมาที่ /var/www/keelek
+  git clone https://github.com/athanhomemail/keelek.git /var/www/keelek
   ```
 * **วิธี B (ส่งไฟล์ตรงจาก Mac ด้วย rsync):**
   เปิด Terminal แท็บใหม่บน Mac แล้วรันคำสั่ง:
