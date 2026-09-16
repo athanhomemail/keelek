@@ -34,6 +34,7 @@ export default function AuthPage() {
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [regDisplayName, setRegDisplayName] = useState('');
+  const [regRealName, setRegRealName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regAccountType, setRegAccountType] = useState(ACCOUNT_OPTIONS[0]); // default 'พร้อมเพย์'
@@ -95,12 +96,18 @@ export default function AuthPage() {
       return;
     }
 
+    if (!regRealName.trim()) {
+      setError(`กรุณากรอกชื่อ-นามสกุล${regAccountType === 'พร้อมเพย์' ? ' (ผู้รับพร้อมเพย์)' : ' (เจ้าของบัญชี)'}`);
+      return;
+    }
+
     setLoading(true);
     const isPromptPay = regAccountType === 'พร้อมเพย์';
     const res = await register({
       username: regUsername.trim(),
       password: regPassword,
       displayName: regDisplayName.trim(),
+      realName: regRealName.trim(),
       email: regEmail.trim() || null,
       phone: regPhone.trim() || null,
       bankName: isPromptPay ? 'พร้อมเพย์' : regAccountType,
@@ -209,7 +216,7 @@ export default function AuthPage() {
                     required
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
-                    placeholder="กรอกชื่อผู้ใช้ เช่น admin, leader1"
+                    placeholder="กรอกชื่อผู้ใช้ เช่น admin"
                     className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl pl-10 pr-3.5 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none transition-colors"
                   />
                 </div>
@@ -259,57 +266,23 @@ export default function AuthPage() {
                   <span className="text-[10px] text-amber-500/80 font-mono">รหัสผ่าน: 123456</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {/* Admin */}
                   <button
                     type="button"
                     onClick={() => handleQuickLogin({ id: 1, username: 'admin' })}
-                    className="p-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-left transition-all group"
+                    className="p-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-left transition-all group flex items-center justify-between"
                   >
-                    <div className="flex items-center space-x-1.5 text-xs font-bold text-purple-300">
-                      <Crown className="w-3.5 h-3.5 text-purple-400" />
-                      <span>Admin</span>
+                    <div>
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-purple-300">
+                        <Crown className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Admin (ผู้ดูแลระบบ)</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5">ชื่อผู้ใช้: admin • รหัสผ่าน: 123456</p>
                     </div>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">ผู้ดูแลระบบ</p>
-                  </button>
-
-                  {/* Leader */}
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin({ id: 3, username: 'leader1' })}
-                    className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-left transition-all group"
-                  >
-                    <div className="flex items-center space-x-1.5 text-xs font-bold text-amber-300">
-                      <Shield className="w-3.5 h-3.5 text-amber-400" />
-                      <span>หัวหน้า</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">เฮียเก้า (เจ้ามือ)</p>
-                  </button>
-
-                  {/* Member 1 */}
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin({ id: 3, username: 'member1' })}
-                    className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-left transition-all group"
-                  >
-                    <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-300">
-                      <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>สมาชิก 1</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">น้องแนน (ลูกทีม)</p>
-                  </button>
-
-                  {/* Member 2 */}
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin({ id: 4, username: 'member2' })}
-                    className="p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-left transition-all group"
-                  >
-                    <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-300">
-                      <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>สมาชิก 2</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 truncate mt-0.5">พี่ท็อป (ลูกทีม)</p>
+                    <span className="text-xs text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
+                      เข้าสู่ระบบ →
+                    </span>
                   </button>
                 </div>
               </div>
@@ -465,6 +438,34 @@ export default function AuthPage() {
                 </div>
               </div>
 
+              {/* Account Owner Real Name (ชื่อ-นามสกุลเจ้าของบัญชี / พร้อมเพย์) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  {regAccountType === 'พร้อมเพย์' ? 'ชื่อ-นามสกุล (ผู้รับพร้อมเพย์)' : 'ชื่อ-นามสกุล (เจ้าของบัญชี)'}{' '}
+                  <span className="text-red-500 font-bold ml-0.5">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <User className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={regRealName}
+                    onChange={(e) => setRegRealName(e.target.value)}
+                    placeholder={
+                      regAccountType === 'พร้อมเพย์'
+                        ? 'เช่น นายสมชาย ใจดี (ชื่อที่ผูกกับพร้อมเพย์)'
+                        : 'เช่น นายสมชาย ใจดี (ชื่อตามสมุดบัญชี)'
+                    }
+                    className="w-full bg-obsidian-950 border border-slate-700/80 focus:border-amber-400 rounded-xl pl-9 pr-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  * จะแสดงในสลิปแคปส่งลูกค้า เพื่อให้ลูกค้าตรวจสอบชื่อก่อนโอนเงิน
+                </p>
+              </div>
+
               <button
                 type="submit"
                 disabled={
@@ -473,7 +474,8 @@ export default function AuthPage() {
                   !regPassword ||
                   !regConfirmPassword ||
                   !regDisplayName.trim() ||
-                  !regAccountNumber.trim()
+                  !regAccountNumber.trim() ||
+                  !regRealName.trim()
                 }
                 className="w-full py-3.5 mt-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:opacity-95 disabled:opacity-50 text-obsidian-950 font-bold rounded-xl shadow-lg shadow-amber-500/25 text-sm transition-all flex items-center justify-center space-x-2"
               >

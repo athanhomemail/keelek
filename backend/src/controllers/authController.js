@@ -165,6 +165,7 @@ export async function register(req, res) {
       id: result.insertId,
       username: username.trim(),
       display_name: displayName.trim(),
+      real_name: realName ? realName.trim() : null,
       email: email ? email.trim() : null,
       phone: phone ? phone.trim() : null,
       bank_name: bankName || null,

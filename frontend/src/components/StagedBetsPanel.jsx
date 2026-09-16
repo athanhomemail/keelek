@@ -1,10 +1,13 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
+import { QRCodeCanvas } from 'qrcode.react';
+import { generatePromptPayPayload, formatPromptPayDisplay } from '../utils/promptpay.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { 
   Trash2, Copy, Check, Camera, Grid, 
   CheckCircle, AlertTriangle, XCircle, Sparkles,
   Sliders, ArrowUpRight, ShieldAlert, DollarSign,
-  Download
+  Download, QrCode, Building2, User
 } from 'lucide-react';
 
 const BET_TYPE_INFO = {
@@ -50,7 +53,9 @@ export default function StagedBetsPanel({
   const [tabWarning, setTabWarning] = useState('');
   const [batchEditType, setBatchEditType] = useState(null);
   const [batchPriceInput, setBatchPriceInput] = useState('');
+  const [showPaymentInfo, setShowPaymentInfo] = useState(true);
 
+  const { user } = useAuth();
   const slipRef = useRef(null);
   const warningTimerRef = useRef(null);
 
@@ -225,6 +230,15 @@ export default function StagedBetsPanel({
 
   const totalAmount = stagedItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
+  const hasPromptPay = Boolean(user?.promptpay);
+  const hasBank = Boolean(user?.account_no && user?.bank_name);
+
+  // คำนวณ Payload PromptPay QR (มาตรฐาน BOT EMVCo) ผูกกับยอดเงินอัตโนมัติ
+  const promptPayPayload = useMemo(() => {
+    if (!user?.promptpay) return '';
+    return generatePromptPayPayload(user.promptpay, totalAmount);
+  }, [user?.promptpay, totalAmount]);
+
   // ดำเนินการปรับราคายกหมวด
   const handleApplyBatchPrice = (type) => {
     const price = Number(batchPriceInput);
@@ -271,6 +285,22 @@ export default function StagedBetsPanel({
     text += `--------------------------------\n`;
     text += `💰 ยอดรวมทั้งสิ้น: ${totalAmount.toLocaleString()} บาท (${stagedItems.length} รายการ)\n`;
     text += `📌 สถานะเงิน: ${isPaid ? '✓ จ่ายแล้ว' : '⏳ ยังไม่จ่าย'}`;
+
+    if (showPaymentInfo) {
+      if (hasPromptPay) {
+        text += `\n\n🏦 ช่องทางชำระเงิน (พร้อมเพย์):\n`;
+        text += `   หมายเลข: ${formatPromptPayDisplay(user.promptpay)}\n`;
+        text += `   ชื่อบัญชี: ${user.real_name || user.display_name}\n`;
+        text += `   ยอดโอน: ${totalAmount.toLocaleString()} บาท`;
+      } else if (hasBank) {
+        text += `\n\n🏦 ช่องทางชำระเงิน (บัญชีธนาคาร):\n`;
+        text += `   ธนาคาร: ${user.bank_name}\n`;
+        text += `   เลขบัญชี: ${user.account_no}\n`;
+        text += `   ชื่อบัญชี: ${user.real_name || user.display_name}\n`;
+        text += `   ยอดโอน: ${totalAmount.toLocaleString()} บาท`;
+      }
+    }
+
     return text;
   };
 
@@ -872,17 +902,126 @@ export default function StagedBetsPanel({
                 </span>
               </div>
             </div>
+
+            {/* Slip Payment Box: PromptPay QR Code or Bank Account Card */}
+            {showPaymentInfo && (hasPromptPay || hasBank) && (
+              <div className="border-t border-dashed border-slate-700/80 mt-5 pt-4">
+                {hasPromptPay ? (
+                  /* 1. PromptPay Dynamic Thai QR Payment Card */
+                  <div className="bg-obsidian-900/90 rounded-2xl p-4 border border-amber-500/30 shadow-lg flex flex-col sm:flex-row items-center gap-4">
+                    {/* QR Code Container with white quiet zone */}
+                    <div className="bg-white p-2.5 rounded-2xl shadow-md shrink-0 flex flex-col items-center justify-center">
+                      <QRCodeCanvas
+                        value={promptPayPayload}
+                        size={128}
+                        level="M"
+                        includeMargin={true}
+                        bgColor="#ffffff"
+                        fgColor="#000000"
+                      />
+                      <div className="text-[9px] font-bold text-slate-700 tracking-wider mt-1 uppercase font-mono flex items-center space-x-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block" />
+                        <span>Thai QR Payment</span>
+                      </div>
+                    </div>
+
+                    {/* PromptPay details */}
+                    <div className="flex-1 text-center sm:text-left min-w-0">
+                      <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 text-[11px] font-bold mb-1.5">
+                        <QrCode className="w-3.5 h-3.5 text-blue-400" />
+                        <span>สแกนจ่ายผ่านพร้อมเพย์</span>
+                      </div>
+
+                      <div className="text-xs text-slate-300 mt-1">
+                        ชื่อบัญชีผู้รับ:{' '}
+                        <strong className="text-slate-100 font-bold text-sm">
+                          {user?.real_name || user?.display_name}
+                        </strong>
+                      </div>
+
+                      <div className="text-xs text-slate-300 mt-1">
+                        พร้อมเพย์:{' '}
+                        <span className="font-mono font-bold text-amber-400 text-sm">
+                          {formatPromptPayDisplay(user?.promptpay)}
+                        </span>
+                      </div>
+
+                      <div className="mt-2.5 inline-flex items-baseline space-x-1.5 bg-obsidian-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                        <span className="text-xs text-slate-400">ยอดเงินระบุอัตโนมัติ:</span>
+                        <span className="font-mono font-black text-amber-400 text-base">
+                          {totalAmount.toLocaleString()}
+                        </span>
+                        <span className="text-xs text-slate-400">บาท</span>
+                      </div>
+
+                      <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+                        💡 สแกนผ่านแอปธนาคารใดก็ได้ ยอดเงินจะถูกกรอกให้อัตโนมัติทันที
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  /* 2. Bank Account Transfer Card */
+                  <div className="bg-obsidian-900/90 rounded-2xl p-4 border border-amber-500/30 shadow-lg">
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-800">
+                      <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                        <Building2 className="w-3.5 h-3.5 text-amber-400" />
+                        <span>ช่องทางโอนเงินผ่านบัญชีธนาคาร</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-200">
+                        {user?.bank_name}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 bg-obsidian-950 p-3 rounded-xl border border-slate-800">
+                      <div>
+                        <span className="text-[11px] text-slate-400 block mb-0.5">เลขที่บัญชี</span>
+                        <span className="font-mono font-black text-lg text-amber-400 tracking-wider">
+                          {user?.account_no}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[11px] text-slate-400 block mb-0.5">ชื่อเจ้าของบัญชี</span>
+                        <span className="font-semibold text-sm text-slate-100">
+                          {user?.real_name || user?.display_name}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="text-slate-400">ยอดเงินที่ต้องโอน:</span>
+                      <span className="font-mono font-bold text-slate-100 text-sm">
+                        {totalAmount.toLocaleString()} บาท
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-            {/* Feedback notification toast */}
-            {copyImgMsg ? (
-              <div className="text-xs font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 animate-fade-in">
-                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{copyImgMsg}</span>
-              </div>
-            ) : <div />}
+            {/* Feedback notification toast or Toggle Option */}
+            <div className="flex items-center space-x-3">
+              {copyImgMsg ? (
+                <div className="text-xs font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 animate-fade-in">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{copyImgMsg}</span>
+                </div>
+              ) : null}
+
+              {(hasPromptPay || hasBank) && (
+                <label className="inline-flex items-center space-x-2 text-xs text-slate-300 cursor-pointer select-none bg-obsidian-950 hover:bg-obsidian-900 px-3 py-1.5 rounded-xl border border-slate-750 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={showPaymentInfo}
+                    onChange={(e) => setShowPaymentInfo(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-amber-500 rounded cursor-pointer"
+                  />
+                  <span>แนบ QR/ข้อมูลชำระเงิน</span>
+                </label>
+              )}
+            </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {/* Secondary: Copy Text */}
