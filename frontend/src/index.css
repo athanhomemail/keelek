@@ -1,0 +1,321 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   1. Theme CSS Variables (Dark by Default)
+   ========================================================================== */
+:root,
+html.dark,
+body.dark,
+[data-theme="dark"] {
+  --obsidian-950: 7 9 14;      /* #07090e Page Background */
+  --obsidian-900: 13 17 23;    /* #0d1117 Main Cards / Headers */
+  --obsidian-850: 18 23 33;    /* #121721 Sub-cards / Tables */
+  --obsidian-800: 22 29 43;    /* #161d2b Secondary Buttons / Inputs */
+  --obsidian-700: 34 45 66;    /* #222d42 Active Borders */
+
+  --slate-50: 248 250 252;
+  --slate-100: 241 245 249;   /* #f1f5f9 High-contrast bright text */
+  --slate-200: 226 232 240;   /* #e2e8f0 */
+  --slate-300: 203 213 225;   /* #cbd5e1 */
+  --slate-400: 148 163 184;   /* #94a3b8 */
+  --slate-500: 100 116 139;   /* #64748b */
+  --slate-600: 71 85 105;     /* #475569 */
+  --slate-700: 51 65 85;      /* #334155 */
+  --slate-800: 30 41 59;      /* #1e293b */
+  --slate-900: 15 23 42;      /* #0f172a */
+
+  --scrollbar-track: #0d1117;
+  --scrollbar-thumb: #222d42;
+  --glass-bg: rgba(18, 23, 33, 0.82);
+  --glass-border: rgba(245, 158, 11, 0.15);
+  --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --gold-text-grad: linear-gradient(135deg, #fde68a 0%, #f59e0b 50%, #d97706 100%);
+}
+
+/* ==========================================================================
+   2. Light Mode Variable Definitions
+   ========================================================================== */
+html.light,
+body.light,
+[data-theme="light"],
+.light {
+  --obsidian-950: 245 247 250; /* Clean bright modern background #f5f7fa */
+  --obsidian-900: 255 255 255; /* #ffffff Pure white cards / header */
+  --obsidian-850: 241 245 249; /* #f1f5f9 Slate-100 sub-card / table header */
+  --obsidian-800: 226 232 240; /* #e2e8f0 Slate-200 buttons / light border */
+  --obsidian-700: 203 213 225; /* #cbd5e1 Slate-300 borders */
+
+  --slate-50: 15 23 42;
+  --slate-100: 15 23 42;      /* #0f172a Deep Dark Text */
+  --slate-200: 30 41 59;      /* #1e293b Secondary Text */
+  --slate-300: 51 65 85;      /* #334155 Body Text */
+  --slate-400: 100 116 139;   /* #64748b Subtitle & Muted */
+  --slate-500: 140 152 170;   /* #8c98aa Placeholder & Dimmed */
+  --slate-600: 203 213 225;   /* #cbd5e1 Divider */
+  --slate-700: 226 232 240;   /* #e2e8f0 Subtle border */
+  --slate-800: 235 240 245;   /* #ebf0f5 Soft card border */
+  --slate-900: 248 250 252;
+
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(245, 158, 11, 0.28);
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.07);
+  --gold-text-grad: linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%);
+}
+
+@layer base {
+  body {
+    @apply bg-obsidian-950 text-slate-100 min-h-screen transition-colors duration-200;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Make all numbers monospaced and tabular for clean lottery columns */
+  .tabular-numbers, input[type="number"], .font-mono-numbers {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ==========================================================================
+   3. Full-Page Light Mode Explicit Overrides
+   ========================================================================== */
+html.light body,
+[data-theme="light"] body {
+  background-color: #f5f7fa !important;
+  color: #0f172a !important;
+}
+
+/* Background surfaces */
+html.light .bg-obsidian-950,
+[data-theme="light"] .bg-obsidian-950 {
+  background-color: #f5f7fa !important;
+}
+
+html.light .bg-obsidian-900,
+[data-theme="light"] .bg-obsidian-900 {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-obsidian-850,
+[data-theme="light"] .bg-obsidian-850 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .bg-obsidian-800,
+[data-theme="light"] .bg-obsidian-800 {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .bg-obsidian-700,
+[data-theme="light"] .bg-obsidian-700 {
+  background-color: #cbd5e1 !important;
+}
+
+/* Translucent surfaces */
+html.light .bg-obsidian-900\/90,
+[data-theme="light"] .bg-obsidian-900\/90 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.light .bg-obsidian-900\/95,
+[data-theme="light"] .bg-obsidian-900\/95 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+}
+
+html.light .bg-obsidian-950\/80,
+[data-theme="light"] .bg-obsidian-950\/80 {
+  background-color: rgba(245, 247, 250, 0.85) !important;
+}
+
+html.light .bg-obsidian-950\/60,
+[data-theme="light"] .bg-obsidian-950\/60 {
+  background-color: rgba(245, 247, 250, 0.65) !important;
+}
+
+html.light .bg-obsidian-950\/40,
+[data-theme="light"] .bg-obsidian-950\/40 {
+  background-color: rgba(245, 247, 250, 0.45) !important;
+}
+
+html.light .bg-obsidian-950\/30,
+[data-theme="light"] .bg-obsidian-950\/30 {
+  background-color: rgba(245, 247, 250, 0.35) !important;
+}
+
+html.light .hover\:bg-obsidian-850\/50:hover,
+[data-theme="light"] .hover\:bg-obsidian-850\/50:hover {
+  background-color: rgba(241, 245, 249, 0.7) !important;
+}
+
+html.light .hover\:bg-obsidian-850:hover,
+[data-theme="light"] .hover\:bg-obsidian-850:hover {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .hover\:bg-obsidian-700:hover,
+[data-theme="light"] .hover\:bg-obsidian-700:hover {
+  background-color: #cbd5e1 !important;
+}
+
+/* Typography high-contrast in light mode */
+html.light .text-slate-100,
+[data-theme="light"] .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-200,
+[data-theme="light"] .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html.light .text-slate-300,
+[data-theme="light"] .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400,
+[data-theme="light"] .text-slate-400 {
+  color: #64748b !important;
+}
+
+html.light .text-slate-500,
+[data-theme="light"] .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Text on accent buttons (e.g. amber buttons) must stay deep dark */
+html.light .text-obsidian-950,
+[data-theme="light"] .text-obsidian-950 {
+  color: #07090e !important;
+}
+
+/* Border colors */
+html.light .border-slate-800,
+[data-theme="light"] .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .border-slate-700,
+[data-theme="light"] .border-slate-700 {
+  border-color: #cbd5e1 !important;
+}
+
+html.light .border-slate-700\/60,
+[data-theme="light"] .border-slate-700\/60 {
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+html.light .border-slate-800\/80,
+[data-theme="light"] .border-slate-800\/80 {
+  border-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+html.light .border-slate-800\/60,
+[data-theme="light"] .border-slate-800\/60 {
+  border-color: rgba(226, 232, 240, 0.6) !important;
+}
+
+/* Form Inputs in Light Mode */
+html.light input[type="text"],
+html.light input[type="number"],
+html.light textarea,
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input[type="checkbox"],
+[data-theme="light"] input[type="checkbox"] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder,
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Ensure placeholders always render with Mitr font even when input uses font-mono */
+input::placeholder,
+textarea::placeholder {
+  font-family: 'Mitr', sans-serif !important;
+}
+
+/* Simulator top bar gradient in Light Mode */
+html.light .from-obsidian-900,
+[data-theme="light"] .from-obsidian-900 {
+  --tw-gradient-from: #ffffff var(--tw-gradient-from-position) !important;
+}
+html.light .via-obsidian-850,
+[data-theme="light"] .via-obsidian-850 {
+  --tw-gradient-stops: var(--tw-gradient-from), #f8fafc var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+html.light .to-obsidian-900,
+[data-theme="light"] .to-obsidian-900 {
+  --tw-gradient-to: #ffffff var(--tw-gradient-to-position) !important;
+}
+
+/* Soft, clean shadows in Light Mode */
+html.light .shadow-2xl,
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -4px rgba(0, 0, 0, 0.03) !important;
+}
+html.light .shadow-xl,
+[data-theme="light"] .shadow-xl {
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.07) !important;
+}
+html.light .shadow-lg,
+[data-theme="light"] .shadow-lg {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f59e0b;
+}
+
+/* Glassmorphism & Gold accents */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+}
+
+.gold-gradient-text {
+  background: var(--gold-text-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
