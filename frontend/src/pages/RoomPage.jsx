@@ -105,6 +105,25 @@ export default function RoomPage({ onLeaveRoom }) {
     }
   }, [role]);
 
+  // Real-time socket listener to refresh team & pending requests
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRealtimeUpdate = () => {
+      fetchTeam();
+    };
+
+    socket.on('team_updated', handleRealtimeUpdate);
+    socket.on('member_join_requested', handleRealtimeUpdate);
+    socket.on('notification_received', handleRealtimeUpdate);
+
+    return () => {
+      socket.off('team_updated', handleRealtimeUpdate);
+      socket.off('member_join_requested', handleRealtimeUpdate);
+      socket.off('notification_received', handleRealtimeUpdate);
+    };
+  }, [socket]);
+
   const copyRoomCode = () => {
     if (teamData?.room?.code) {
       navigator.clipboard.writeText(teamData.room.code);

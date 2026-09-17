@@ -12,6 +12,8 @@ export default function BillSummaryPage({ onEditBill }) {
   const [summary, setSummary] = useState(null);
   const [periods, setPeriods] = useState([]);
   const [selectedPeriodId, setSelectedPeriodId] = useState('');
+  const [adminRooms, setAdminRooms] = useState([]);
+  const [selectedRoomId, setSelectedRoomId] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [prizeFilter, setPrizeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -23,7 +25,7 @@ export default function BillSummaryPage({ onEditBill }) {
   // Selected Bill for Modal View
   const [selectedBill, setSelectedBill] = useState(null);
 
-  // Load Draw Periods
+  // Load Draw Periods & Admin Rooms
   useEffect(() => {
     const fetchPeriods = async () => {
       try {
@@ -39,7 +41,21 @@ export default function BillSummaryPage({ onEditBill }) {
       }
     };
     fetchPeriods();
-  }, []);
+
+    if (role === 'ADMIN') {
+      const fetchAdminRooms = async () => {
+        try {
+          const res = await axios.get('/api/admin/rooms');
+          if (res.data.success) {
+            setAdminRooms(res.data.rooms || []);
+          }
+        } catch (err) {
+          console.error('Failed to load admin rooms:', err);
+        }
+      };
+      fetchAdminRooms();
+    }
+  }, [role]);
 
   // Fetch Bills (supports silent background sync to prevent unmounting/scroll jumps)
   const fetchBills = async (isBackground = false) => {
@@ -47,6 +63,7 @@ export default function BillSummaryPage({ onEditBill }) {
     try {
       let url = `/api/bills?`;
       if (selectedPeriodId) url += `drawPeriodId=${selectedPeriodId}&`;
+      if (selectedRoomId) url += `roomId=${selectedRoomId}&`;
       if (paymentFilter) url += `customerPaymentStatus=${paymentFilter}&`;
       if (prizeFilter) url += `prizePayoutStatus=${prizeFilter}&`;
       if (statusFilter) url += `status=${statusFilter}&`;
@@ -67,7 +84,7 @@ export default function BillSummaryPage({ onEditBill }) {
     if (user?.room_id || role === 'ADMIN') {
       fetchBills();
     }
-  }, [selectedPeriodId, paymentFilter, prizeFilter, statusFilter, user]);
+  }, [selectedPeriodId, selectedRoomId, paymentFilter, prizeFilter, statusFilter, user]);
 
   // Update payment status (3-tier: CUSTOMER -> MEMBER -> DEALER) with Optimistic UI & Silent Sync
   const handleTogglePayment = async (billId, stage, currentStatus) => {
@@ -185,25 +202,44 @@ export default function BillSummaryPage({ onEditBill }) {
             <span>สรุปบิลและบัญชีการเงิน</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            {role === 'LEADER'
+            {role === 'ADMIN'
+              ? 'ดูภาพรวมบิลและยอดเงินทุกห้องคีย์ในระบบ'
+              : role === 'LEADER'
               ? 'ดูบิลทั้งหมดในห้อง ติดตามยอดค้างชำระ และกำไรสุทธิ'
               : 'ดูเฉพาะบิลของตัวเอง และอัปเดตสถานะการจ่ายเงินของลูกค้า'}
           </p>
         </div>
 
-        {/* Period Selector Filter */}
-        <div className="flex items-center space-x-2">
-          <Filter className="w-4 h-4 text-amber-400" />
-          <select
-            value={selectedPeriodId}
-            onChange={(e) => setSelectedPeriodId(e.target.value)}
-            className="bg-obsidian-900 border border-slate-700 focus:border-amber-400 text-xs font-semibold rounded-xl px-3 py-2 text-slate-200 outline-none"
-          >
-            <option value="">ทุกงวดหวย</option>
-            {periods.map(p => (
-              <option key={p.id} value={p.id}>{p.period_name}</option>
-            ))}
-          </select>
+        {/* Filters: Period & Admin Room Selector */}
+        <div className="flex flex-wrap items-center gap-2">
+          {role === 'ADMIN' && adminRooms.length > 0 && (
+            <select
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(e.target.value)}
+              className="bg-obsidian-900 border border-purple-500/40 focus:border-purple-400 text-xs font-semibold rounded-xl px-3 py-2 text-purple-200 outline-none"
+            >
+              <option value="">ทุกห้องคีย์ (ทั้งหมด)</option>
+              {adminRooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  ห้อง: {r.name} ({r.code})
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-amber-400" />
+            <select
+              value={selectedPeriodId}
+              onChange={(e) => setSelectedPeriodId(e.target.value)}
+              className="bg-obsidian-900 border border-slate-700 focus:border-amber-400 text-xs font-semibold rounded-xl px-3 py-2 text-slate-200 outline-none"
+            >
+              <option value="">ทุกงวดหวย</option>
+              {periods.map(p => (
+                <option key={p.id} value={p.id}>{p.period_name}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -219,7 +255,7 @@ export default function BillSummaryPage({ onEditBill }) {
 
           <div className="bg-obsidian-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
             <span className="text-xs text-slate-400 block mb-1">
-              {role === 'LEADER' ? 'กำไรเจ้ามืองวดนี้' : 'ค่าคอมมิชชั่นของฉัน'}
+              {role === 'ADMIN' ? 'ยอดคอมมิชชั่นรวม' : role === 'LEADER' ? 'กำไรเจ้ามืองวดนี้' : 'ค่าคอมมิชชั่นของฉัน'}
             </span>
             <div className={`text-lg sm:text-xl font-bold font-mono ${
               role === 'LEADER' ? (summary.dealerProfit >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-amber-400'
@@ -331,10 +367,15 @@ export default function BillSummaryPage({ onEditBill }) {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                      <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span>ลูกค้า: <strong className={isCancelled ? 'text-slate-400 line-through' : 'text-slate-200'}>{b.customer_name}</strong></span>
-                        {role === 'LEADER' && (
+                        {(role === 'LEADER' || role === 'ADMIN') && (
                           <span>ผู้คีย์: <strong className="text-amber-300">{b.member_name}</strong></span>
+                        )}
+                        {role === 'ADMIN' && b.room_name && (
+                          <span className="px-2 py-0.5 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-300 font-semibold text-[10px]">
+                            ห้อง: {b.room_name} ({b.room_code})
+                          </span>
                         )}
                         <span>{new Date(b.created_at).toLocaleString('th-TH')}</span>
                       </div>
@@ -351,8 +392,8 @@ export default function BillSummaryPage({ onEditBill }) {
                         </div>
                       </div>
 
-                      {/* Edit Bill Button */}
-                      {canEditOrCancel && (
+                      {/* Edit Bill Button (Not for Admin) */}
+                      {canEditOrCancel && role !== 'ADMIN' && (
                         <button
                           type="button"
                           disabled={loadingEditId === b.id}

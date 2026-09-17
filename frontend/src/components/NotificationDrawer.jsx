@@ -17,6 +17,80 @@ export default function NotificationDrawer({ isOpen, onClose, onNavigate }) {
   const [filter, setFilter] = useState('ALL'); // 'ALL' | 'BILL' | 'APPROVAL' | 'DRAW_RESULT'
   const [selectedNotif, setSelectedNotif] = useState(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionSuccessMessage, setActionSuccessMessage] = useState('');
+  const [actionErrorMessage, setActionErrorMessage] = useState('');
+
+  useEffect(() => {
+    setActionSuccessMessage('');
+    setActionErrorMessage('');
+  }, [selectedNotif]);
+
+  // Handle member join request approval directly from drawer
+  const handleApproveJoinRequest = async (memberId, roomId) => {
+    setActionLoading(true);
+    setActionErrorMessage('');
+    try {
+      const res = await axios.post('/api/rooms/approve-member', { userId: memberId, roomId });
+      if (res.data.success) {
+        setActionSuccessMessage('🎉 อนุมัติสมาชิกเรียบร้อยแล้ว!');
+        setNotifications((prev) =>
+          prev.map((n) => {
+            const m = parseMeta(n);
+            if (m.action === 'MEMBER_JOIN_REQUEST' && String(m.memberId) === String(memberId)) {
+              return { ...n, isHandled: 'APPROVED', is_read: true, isRead: true };
+            }
+            return n;
+          })
+        );
+        if (selectedNotif) {
+          setSelectedNotif((prev) => ({
+            ...prev,
+            isHandled: 'APPROVED',
+            is_read: true,
+            isRead: true
+          }));
+        }
+      }
+    } catch (err) {
+      setActionErrorMessage(err.response?.data?.message || 'ไม่สามารถอนุมัติได้');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle member join request rejection directly from drawer
+  const handleRejectJoinRequest = async (memberId, roomId) => {
+    setActionLoading(true);
+    setActionErrorMessage('');
+    try {
+      const res = await axios.post('/api/rooms/reject-member', { userId: memberId, roomId });
+      if (res.data.success) {
+        setActionSuccessMessage('🚫 ปฏิเสธคำขอเข้าร่วมห้องแล้ว');
+        setNotifications((prev) =>
+          prev.map((n) => {
+            const m = parseMeta(n);
+            if (m.action === 'MEMBER_JOIN_REQUEST' && String(m.memberId) === String(memberId)) {
+              return { ...n, isHandled: 'REJECTED', is_read: true, isRead: true };
+            }
+            return n;
+          })
+        );
+        if (selectedNotif) {
+          setSelectedNotif((prev) => ({
+            ...prev,
+            isHandled: 'REJECTED',
+            is_read: true,
+            isRead: true
+          }));
+        }
+      }
+    } catch (err) {
+      setActionErrorMessage(err.response?.data?.message || 'ไม่สามารถปฏิเสธได้');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // Fetch notifications
   const fetchNotifications = async () => {
@@ -279,23 +353,34 @@ export default function NotificationDrawer({ isOpen, onClose, onNavigate }) {
                       </span>
 
                       <div className="flex items-center space-x-2.5">
-                        {/* ONLY Admin gets the 'ไปหน้าจัดการ' button */}
-                        {isAdmin && n.type === 'APPROVAL' && onNavigate && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onClose();
-                              if (meta.action === 'MEMBER_JOIN_REQUEST') {
-                                onNavigate('room');
-                              } else {
+                        {/* Approval Actions: Member Join Request for Leader, Room Request for Admin */}
+                        {n.type === 'APPROVAL' && (
+                          meta.action === 'MEMBER_JOIN_REQUEST' ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectNotif(n);
+                              }}
+                              className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 text-[11px] bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-lg transition-colors shadow-sm"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>{n.isHandled === 'APPROVED' ? 'อนุมัติแล้ว' : 'พิจารณาอนุมัติ'}</span>
+                            </button>
+                          ) : isAdmin && onNavigate ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
                                 onNavigate('admin');
-                              }
-                            }}
-                            className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-0.5 text-[11px]"
-                          >
-                            <span>ไปหน้าจัดการ</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </button>
+                              }}
+                              className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-0.5 text-[11px]"
+                            >
+                              <span>ไปหน้าจัดการ</span>
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                          ) : null
                         )}
 
                         {/* Bill quick link for users with room access */}
@@ -393,6 +478,84 @@ export default function NotificationDrawer({ isOpen, onClose, onNavigate }) {
               {(() => {
                 const meta = parseMeta(selectedNotif);
                 if (!meta || Object.keys(meta).length === 0) return null;
+
+                // 0. MEMBER_JOIN_REQUEST (Leader / Admin approval view)
+                if (meta.action === 'MEMBER_JOIN_REQUEST' || (selectedNotif.type === 'APPROVAL' && meta.memberId)) {
+                  return (
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-950/30 via-obsidian-950 to-amber-950/20 border border-purple-500/30 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                          <UserPlus className="w-4 h-4 text-purple-400" />
+                          <span>คำขอเข้าร่วมเป็นลูกทีมในห้อง</span>
+                        </div>
+                        {selectedNotif.isHandled === 'APPROVED' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> อนุมัติแล้ว
+                          </span>
+                        ) : selectedNotif.isHandled === 'REJECTED' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">
+                            ปฏิเสธแล้ว
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
+                            รออนุมัติ
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Member Profile info card */}
+                      <div className="flex items-center gap-3 p-3 bg-obsidian-900/90 rounded-2xl border border-slate-800">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 p-[2px] shrink-0">
+                          {meta.memberProfilePic ? (
+                            <img
+                              src={meta.memberProfilePic}
+                              alt={meta.memberName}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-obsidian-950 flex items-center justify-center text-amber-400 font-bold text-base">
+                              {meta.memberName ? meta.memberName.charAt(0).toUpperCase() : 'U'}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-slate-100 truncate">
+                            {meta.memberName || 'สมาชิก'}
+                            {meta.memberNickname ? ` (${meta.memberNickname})` : ''}
+                          </div>
+                          <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                            {meta.memberUsername && <span>@{meta.memberUsername}</span>}
+                            {meta.memberPhone && (
+                              <span className="flex items-center gap-0.5 font-mono">
+                                <Phone className="w-3 h-3 text-slate-500" /> {meta.memberPhone}
+                              </span>
+                            )}
+                          </div>
+                          {meta.roomName && (
+                            <div className="text-[11px] text-amber-400 mt-1 font-medium">
+                              ขอเข้าห้อง: {meta.roomName}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action alerts */}
+                      {actionSuccessMessage && (
+                        <div className="p-3 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-2 animate-fade-in">
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                          <span>{actionSuccessMessage}</span>
+                        </div>
+                      )}
+                      {actionErrorMessage && (
+                        <div className="p-3 bg-rose-500/20 border border-rose-500/40 text-rose-300 rounded-xl text-xs font-semibold flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+                          <span>{actionErrorMessage}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
 
                 // 1. DRAW_RESULT (ผลสลากหวย)
                 if (selectedNotif.type === 'DRAW_RESULT' || meta.result3top || meta.result2top) {
@@ -550,51 +713,114 @@ export default function NotificationDrawer({ isOpen, onClose, onNavigate }) {
             </div>
 
             {/* Modal Footer / Actions */}
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+            <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
               <button
                 type="button"
                 onClick={() => setSelectedNotif(null)}
-                className="flex-1 py-2.5 px-4 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700/60 transition-colors"
+                className="py-2.5 px-4 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700/60 transition-colors"
               >
                 ปิด
               </button>
 
-              {/* ONLY Admin gets the 'ไปหน้าจัดการ' button */}
-              {isAdmin && selectedNotif.type === 'APPROVAL' && onNavigate && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const meta = parseMeta(selectedNotif);
-                    setSelectedNotif(null);
-                    onClose();
-                    if (meta.action === 'MEMBER_JOIN_REQUEST') {
-                      onNavigate('room');
-                    } else {
-                      onNavigate('admin');
-                    }
-                  }}
-                  className="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-obsidian-950 rounded-xl text-xs font-bold shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-1.5"
-                >
-                  <span>ไปหน้าจัดการ</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </button>
-              )}
+              {/* Actions for Member Join Request (Leader & Admin) */}
+              {(() => {
+                const meta = parseMeta(selectedNotif);
+                if (meta.action === 'MEMBER_JOIN_REQUEST' && meta.memberId) {
+                  return (
+                    <div className="flex-1 flex items-center justify-end gap-2">
+                      {selectedNotif.isHandled !== 'APPROVED' && selectedNotif.isHandled !== 'REJECTED' && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={actionLoading}
+                            onClick={() => handleRejectJoinRequest(meta.memberId, meta.roomId)}
+                            className="py-2.5 px-3.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5"
+                          >
+                            <X className="w-3.5 h-3.5 text-rose-400" />
+                            <span>ปฏิเสธ</span>
+                          </button>
 
-              {/* Bill summary navigation for users with room access */}
-              {selectedNotif.type === 'BILL' && onNavigate && (user?.room_id || isAdmin) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedNotif(null);
-                    onClose();
-                    onNavigate('bills');
-                  }}
-                  className="flex-1 py-2.5 px-4 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                >
-                  <span>ดูสรุปบิล</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              )}
+                          <button
+                            type="button"
+                            disabled={actionLoading}
+                            onClick={() => handleApproveJoinRequest(meta.memberId, meta.roomId)}
+                            className="py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-obsidian-950 rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-500/25 transition-all transform active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+                          >
+                            <Check className="w-4 h-4 stroke-[3]" />
+                            <span>{actionLoading ? 'กำลังอนุมัติ...' : 'อนุมัติเข้าร่วมห้อง'}</span>
+                          </button>
+                        </>
+                      )}
+
+                      {onNavigate && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedNotif(null);
+                            onClose();
+                            onNavigate('room');
+                          }}
+                          className="py-2.5 px-3.5 bg-obsidian-800 hover:bg-obsidian-700 text-amber-400 border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1"
+                        >
+                          <span>ไปหน้าห้อง</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Action for Admin Room Request
+                if (isAdmin && meta.action === 'ROOM_REQUEST' && onNavigate) {
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedNotif(null);
+                        onClose();
+                        onNavigate('admin');
+                      }}
+                      className="flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-obsidian-950 rounded-xl text-xs font-bold shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <span>ไปหน้าจัดการ (หลังบ้าน)</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  );
+                }
+
+                // Bill summary navigation for users with room access
+                if (selectedNotif.type === 'BILL' && onNavigate && (user?.room_id || isAdmin) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedNotif(null);
+                      onClose();
+                      onNavigate('bills');
+                    }}
+                    className="flex-1 py-2.5 px-4 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <span>ดูสรุปบิล</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )) {
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedNotif(null);
+                        onClose();
+                        onNavigate('bills');
+                      }}
+                      className="flex-1 py-2.5 px-4 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <span>ดูสรุปบิล</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  );
+                }
+
+                return null;
+              })()}
             </div>
 
           </div>

@@ -161,7 +161,20 @@ export async function joinRoom(req, res) {
       leaderId: room.leader_id,
       memberId: userId,
       memberName: req.user.display_name,
-      memberProfilePic: req.user.profile_pic_url
+      memberNickname: req.user.nickname,
+      memberUsername: req.user.username,
+      memberPhone: req.user.phone,
+      memberProfilePic: req.user.profile_pic_url,
+      roomId: room.id,
+      roomName: room.name
+    });
+
+    // Real-time socket แจ้งเตือนหัวหน้าห้อง
+    emitToUser(room.leader_id, 'member_join_requested', {
+      memberId: userId,
+      memberName: req.user.display_name,
+      roomId: room.id,
+      roomName: room.name
     });
 
     res.json({
@@ -179,7 +192,12 @@ export async function joinRoom(req, res) {
  */
 export async function getPendingJoinRequests(req, res) {
   try {
-    const roomId = req.user.room_id;
+    let roomId = req.user.room_id;
+    if (!roomId) {
+      const [myRooms] = await pool.query('SELECT id FROM rooms WHERE leader_id = ? AND status = "ACTIVE" LIMIT 1', [req.user.id]);
+      if (myRooms.length) roomId = myRooms[0].id;
+    }
+
     if (!roomId) return res.status(400).json({ success: false, message: 'คุณไม่ได้อยู่ในห้องใดๆ' });
 
     const [rows] = await pool.query(
@@ -204,7 +222,24 @@ export async function approveMember(req, res) {
   const connection = await pool.getConnection();
   try {
     const { userId } = req.body;
-    const roomId = req.user.room_id;
+    let roomId = req.user.room_id || req.body.roomId;
+
+    if (!roomId) {
+      const [myRooms] = await connection.query('SELECT id FROM rooms WHERE leader_id = ? AND status = "ACTIVE" LIMIT 1', [req.user.id]);
+      if (myRooms.length) roomId = myRooms[0].id;
+    }
+
+    if (!roomId) {
+      return res.status(400).json({ success: false, message: 'คุณไม่ได้อยู่ในห้องใดๆ' });
+    }
+
+    // ตรวจสอบสิทธิ์ถ้าไม่ใช่ ADMIN ต้องเป็นหัวหน้าของห้องนี้
+    if (req.user.role !== 'ADMIN') {
+      const [checkRoom] = await connection.query('SELECT * FROM rooms WHERE id = ? AND leader_id = ?', [roomId, req.user.id]);
+      if (!checkRoom.length) {
+        return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์อนุมัติสมาชิกในห้องนี้' });
+      }
+    }
 
     await connection.beginTransaction();
 
@@ -218,12 +253,18 @@ export async function approveMember(req, res) {
       [roomId, userId]
     );
 
+    const [roomRows] = await connection.query('SELECT name FROM rooms WHERE id = ?', [roomId]);
+    const roomName = roomRows[0]?.name || 'ห้องคีย์';
+
     await connection.commit();
 
     // เปลี่ยน Rich Menu ของสมาชิก
     await lineService.updateUserRichMenu(userId, 'MEMBER');
 
-    emitToUser(userId, 'room_approved', { roomId });
+    // แจ้งเตือน In-App ให้สมาชิก
+    await lineService.notifyMemberApproved({ memberId: userId, roomName });
+
+    emitToUser(userId, 'room_approved', { roomId, roomName });
     emitToRoom(roomId, 'team_updated', { userId, action: 'JOINED' });
 
     res.json({ success: true, message: 'อนุมัติสมาชิกเรียบร้อยแล้ว' });
@@ -241,7 +282,24 @@ export async function approveMember(req, res) {
 export async function rejectMember(req, res) {
   try {
     const { userId } = req.body;
-    const roomId = req.user.room_id;
+    let roomId = req.user.room_id || req.body.roomId;
+
+    if (!roomId) {
+      const [myRooms] = await pool.query('SELECT id FROM rooms WHERE leader_id = ? AND status = "ACTIVE" LIMIT 1', [req.user.id]);
+      if (myRooms.length) roomId = myRooms[0].id;
+    }
+
+    if (!roomId) {
+      return res.status(400).json({ success: false, message: 'คุณไม่ได้อยู่ในห้องใดๆ' });
+    }
+
+    // ตรวจสอบสิทธิ์ถ้าไม่ใช่ ADMIN ต้องเป็นหัวหน้าของห้องนี้
+    if (req.user.role !== 'ADMIN') {
+      const [checkRoom] = await pool.query('SELECT * FROM rooms WHERE id = ? AND leader_id = ?', [roomId, req.user.id]);
+      if (!checkRoom.length) {
+        return res.status(403).json({ success: false, message: 'คุณไม่มีสิทธิ์ปฏิเสธสมาชิกในห้องนี้' });
+      }
+    }
 
     await pool.query(
       'UPDATE room_members SET status = "REJECTED" WHERE room_id = ? AND user_id = ?',

@@ -91,16 +91,26 @@ class NotificationService {
   /**
    * แจ้งเตือนหัวหน้าห้องเมื่อมีสมาชิกลูกทีมขอเข้าร่วมห้อง
    */
-  async notifyLeaderJoinRequest({ leaderId, memberId, memberName, memberProfilePic }) {
+  async notifyLeaderJoinRequest({ leaderId, memberId, memberName, memberNickname, memberUsername, memberPhone, memberProfilePic, roomId, roomName }) {
     const title = `👤 สมาชิกขอเข้าร่วมห้อง`;
-    const message = `ผู้ใช้ "${memberName}" ขอเข้าร่วมห้องของคุณ กรุณาตรวจสอบและกดยืนยันในเมนูทีม`;
+    const message = `ผู้ใช้ "${memberName}" ขอเข้าร่วมห้อง "${roomName || 'ของคุณ'}" กรุณาตรวจสอบและอนุมัติ`;
 
     return this.createNotification({
       recipientUserId: leaderId,
       title,
       message,
       type: 'APPROVAL',
-      meta: { memberId, memberName, memberProfilePic, action: 'MEMBER_JOIN_REQUEST' }
+      meta: {
+        memberId,
+        memberName,
+        memberNickname,
+        memberUsername,
+        memberPhone,
+        memberProfilePic,
+        roomId,
+        roomName,
+        action: 'MEMBER_JOIN_REQUEST'
+      }
     });
   }
 

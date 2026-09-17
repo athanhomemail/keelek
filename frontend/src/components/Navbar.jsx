@@ -39,10 +39,9 @@ export default function Navbar({ activePage, setActivePage, onOpenNotifications,
   if (role === 'GUEST') {
     navItems.push({ id: 'rooms', label: 'ห้องคีย์', icon: DoorOpen });
   } else if (role === 'ADMIN') {
-    // Admin: สรุปบิล, คีย์เลข, หลังบ้าน
+    // Admin: หลังบ้าน, สรุปบิล (ตัดเมนูคีย์ออกไป ไม่ต้องมีห้อง/สร้างห้อง)
+    navItems.push({ id: 'admin', label: 'หลังบ้าน', icon: ShieldCheck, isHero: true });
     navItems.push({ id: 'bills', label: 'สรุปบิล', icon: FileText });
-    navItems.push({ id: 'keying', label: 'คีย์เลข', icon: Keyboard, isHero: true });
-    navItems.push({ id: 'admin', label: 'หลังบ้าน', icon: ShieldCheck });
   } else if (role === 'LEADER') {
     // Leader: สรุปบิล, คีย์เลข, ห้อง (ยุบรวม ทีมเดิม + ตั้งค่าเดิม)
     navItems.push({ id: 'bills', label: 'สรุปบิล', icon: FileText });

@@ -13,11 +13,13 @@ export async function getBills(req, res) {
 
     let query = `
       SELECT b.*, u.display_name as member_name, u.nickname as member_nickname,
-             dp.period_name, dp.status as period_status, dp.close_time, l.name as lottery_name
+             dp.period_name, dp.status as period_status, dp.close_time, l.name as lottery_name,
+             r.name as room_name, r.code as room_code
       FROM bills b
       JOIN users u ON b.user_id = u.id
       JOIN draw_periods dp ON b.draw_period_id = dp.id
       JOIN lotteries l ON dp.lottery_id = l.id
+      LEFT JOIN rooms r ON b.room_id = r.id
       WHERE 1=1
     `;
     const params = [];

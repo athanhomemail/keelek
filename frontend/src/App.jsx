@@ -60,11 +60,11 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    if (user.room_id) {
+    if (role === 'ADMIN') {
+      setActivePage('admin');
+    } else if (user.room_id) {
       // หลังจากที่ user login เข้ามาแล้วถ้ามีห้องแล้ว ให้ default ไว้ที่ คีย์เลข เลย
       setActivePage('keying');
-    } else if (role === 'ADMIN') {
-      setActivePage('admin');
     } else {
       setActivePage('rooms');
     }
@@ -104,10 +104,10 @@ export default function App() {
 
       {/* 3. Main Page Content */}
       <main className="flex-1 w-full pb-20 md:pb-8">
-        {(activePage === 'rooms' || (!user.room_id && activePage !== 'admin')) && (
+        {(activePage === 'rooms' || (!user.room_id && role !== 'ADMIN' && activePage !== 'admin')) && (
           <GuestRoomPage onJoined={() => setActivePage('keying')} />
         )}
-        {activePage === 'keying' && (user.room_id || role === 'ADMIN') && (
+        {activePage === 'keying' && role !== 'ADMIN' && user.room_id && (
           <KeyingPage
             editingBill={editingBill}
             onCancelEdit={() => setEditingBill(null)}
@@ -120,15 +120,17 @@ export default function App() {
         {activePage === 'bills' && (user.room_id || role === 'ADMIN') && (
           <BillSummaryPage
             onEditBill={(bill) => {
-              setEditingBill(bill);
-              setActivePage('keying');
+              if (role !== 'ADMIN') {
+                setEditingBill(bill);
+                setActivePage('keying');
+              }
             }}
           />
         )}
         {(activePage === 'room' || activePage === 'team' || activePage === 'settings') && (user.room_id || role === 'ADMIN') && (
-          <RoomPage onLeaveRoom={() => setActivePage('rooms')} />
+          <RoomPage onLeaveRoom={() => setActivePage(role === 'ADMIN' ? 'admin' : 'rooms')} />
         )}
-        {activePage === 'admin' && (
+        {activePage === 'admin' && role === 'ADMIN' && (
           <AdminPage />
         )}
       </main>
