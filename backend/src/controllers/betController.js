@@ -1,5 +1,5 @@
 import { pool } from '../config/db.js';
-import { lineService } from '../services/lineService.js';
+import { notificationService } from '../services/notificationService.js';
 import { broadcastQuotaUpdate, emitToRoom } from '../services/socketService.js';
 
 function getRateForBetType(settings, betType) {
@@ -320,10 +320,10 @@ export async function submitBill(req, res) {
       updatedNumbers: processedItems.map(i => ({ number: i.number, betType: i.betType }))
     });
 
-    // 10. ส่งแจ้งเตือน Rich Message หาหัวหน้าห้อง
+    // 10. ส่งแจ้งเตือนหาหัวหน้าห้อง
     const [rooms] = await pool.query('SELECT leader_id, name FROM rooms WHERE id = ?', [roomId]);
     if (rooms.length) {
-      await lineService.notifyLeaderNewBill({
+      await notificationService.notifyLeaderNewBill({
         leaderId: rooms[0].leader_id,
         roomName: rooms[0].name,
         billNo,

@@ -1,5 +1,5 @@
 import { pool } from '../config/db.js';
-import { lineService } from '../services/lineService.js';
+import { notificationService } from '../services/notificationService.js';
 import { emitToUser, emitToRoom } from '../services/socketService.js';
 
 function generateRoomCode() {
@@ -89,7 +89,7 @@ export async function createRoom(req, res) {
     await connection.commit();
 
     // 5. ส่งแจ้งเตือนไปยัง Admin ทุกคน
-    await lineService.notifyAdminRoomRequest({
+    await notificationService.notifyAdminRoomRequest({
       applicantName: realName || req.user.display_name,
       applicantUsername: req.user.username,
       roomName,
@@ -157,7 +157,7 @@ export async function joinRoom(req, res) {
     }
 
     // ส่งข้อความแจ้งเตือนไปหาหัวหน้าห้อง
-    await lineService.notifyLeaderJoinRequest({
+    await notificationService.notifyLeaderJoinRequest({
       leaderId: room.leader_id,
       memberId: userId,
       memberName: req.user.display_name,
@@ -258,11 +258,8 @@ export async function approveMember(req, res) {
 
     await connection.commit();
 
-    // เปลี่ยน Rich Menu ของสมาชิก
-    await lineService.updateUserRichMenu(userId, 'MEMBER');
-
     // แจ้งเตือน In-App ให้สมาชิก
-    await lineService.notifyMemberApproved({ memberId: userId, roomName });
+    await notificationService.notifyMemberApproved({ memberId: userId, roomName });
 
     emitToUser(userId, 'room_approved', { roomId, roomName });
     emitToRoom(roomId, 'team_updated', { userId, action: 'JOINED' });
@@ -341,9 +338,6 @@ export async function kickMember(req, res) {
 
     await connection.commit();
 
-    // เปลี่ยน Rich Menu กลับเป็นผู้ใช้ใหม่
-    await lineService.updateUserRichMenu(memberId, 'GUEST');
-
     emitToUser(memberId, 'kicked_from_room', { roomId });
     emitToRoom(roomId, 'team_updated', { memberId, action: 'KICKED' });
 
@@ -383,7 +377,6 @@ export async function leaveRoom(req, res) {
 
     await connection.commit();
 
-    await lineService.updateUserRichMenu(userId, 'GUEST');
     emitToRoom(roomId, 'team_updated', { userId, action: 'LEFT' });
 
     res.json({ success: true, message: 'ออกจากห้องเรียบร้อยแล้ว' });
@@ -447,9 +440,8 @@ export async function disbandRoom(req, res) {
 
     await connection.commit();
 
-    // 4. แจ้งเตือนและอัปเดต LINE Rich Menu
+    // 4. แจ้งเตือนผ่าน Socket
     for (const m of members) {
-      lineService.updateUserRichMenu(m.id, 'GUEST').catch(() => {});
       emitToUser(m.id, 'room_disbanded', { roomId, roomName: room.name });
     }
     emitToRoom(roomId, 'room_disbanded', { roomId, roomName: room.name });

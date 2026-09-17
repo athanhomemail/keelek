@@ -1,5 +1,5 @@
 import { pool } from '../config/db.js';
-import { lineService } from '../services/lineService.js';
+import { notificationService } from '../services/notificationService.js';
 import { scrapeAndProcessPeriod } from '../services/lotteryScraper.js';
 import { emitToUser } from '../services/socketService.js';
 
@@ -49,7 +49,7 @@ export async function approveRoom(req, res) {
     await connection.commit();
 
     // แจ้งเตือนหัวหน้าห้อง
-    await lineService.notifyLeaderApproved({
+    await notificationService.notifyLeaderApproved({
       leaderId: room.leader_id,
       roomName: room.name,
       roomCode: room.code

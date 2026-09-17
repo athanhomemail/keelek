@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { pool } from '../config/db.js';
-import { lineService } from '../services/lineService.js';
 
 function generateToken(user) {
   return jwt.sign(

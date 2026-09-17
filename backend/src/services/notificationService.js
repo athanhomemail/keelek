@@ -162,6 +162,13 @@ class NotificationService {
       meta: { periodName, result3top, result2top, result2bottom }
     });
   }
+
+  /**
+   * No-op method: LINE Rich Menu has been removed in favor of web app navigation
+   */
+  async updateUserRichMenu() {
+    return true;
+  }
 }
 
 export const notificationService = new NotificationService();

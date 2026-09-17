@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { pool } from '../config/db.js';
-import { lineService } from './lineService.js';
+import { notificationService } from './notificationService.js';
 import { emitToRoom } from './socketService.js';
 
 /**
@@ -149,8 +149,8 @@ export async function scrapeAndProcessPeriod(periodId, customResults = null) {
 
     await connection.commit();
 
-    // 5. แจ้งเตือนผลหวยออกไปยัง LINE OA
-    await lineService.notifyDrawResult({
+    // 5. แจ้งเตือนผลหวยออก (In-App Notification)
+    await notificationService.notifyDrawResult({
       periodName: period.period_name,
       result3top,
       result2top,
