@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../context/SocketContext.jsx';
@@ -49,7 +49,7 @@ const RULE_TYPE_INFO = {
   }
 };
 
-export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess }) {
+export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, keyingFocusTrigger }) {
   const { user } = useAuth();
   const { quotaUpdates, rulesUpdates } = useSocket();
   const { showAlert, showConfirm } = useModal();
@@ -120,13 +120,64 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Number Rules (เลขอั้น / เลขจ่ายครึ่ง / จำกัดยอด)
+  // Number Rules (เลขอั้น / เลขจ่ายครึ่ง / จำกัดยอด) - Default เป็นย่อไว้ตามต้องการ
   const [periodRules, setPeriodRules] = useState([]);
   const [rulesSettings, setRulesSettings] = useState(null);
   const [loadingRules, setLoadingRules] = useState(false);
-  const [isRulesExpanded, setIsRulesExpanded] = useState(true);
+  const [isRulesExpanded, setIsRulesExpanded] = useState(false);
   const [rulesSearch, setRulesSearch] = useState('');
   const [rulesFilter, setRulesFilter] = useState('ALL'); // 'ALL' | 'BLOCKED' | 'HALF_PAY' | 'CUSTOM_LIMIT'
+
+  // Refs & Highlight State สำหรับการโฟกัสการ์ดแผงคีย์ตัวเลขและช่องกรอกตัวเลข
+  const keyingCardRef = useRef(null);
+  const inputNumberRef = useRef(null);
+  const [isCardFocused, setIsCardFocused] = useState(false);
+
+  // เมื่อผู้ใช้คลิกเมนู "คีย์เลข" ให้ Scroll ไปยังการ์ดแผงคีย์ตัวเลข และ Focus ที่ช่องกรอกตัวเลข
+  useEffect(() => {
+    if (keyingFocusTrigger > 0) {
+      if (keyingMode !== 'MANUAL') {
+        setKeyingMode('MANUAL');
+      }
+
+      // Smooth scroll ไปยังการ์ดแผงคีย์
+      if (keyingCardRef.current) {
+        keyingCardRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+
+      // แสดงเอฟเฟกต์ไฮไลต์กรอบสีทองที่ตัวการ์ดแผงคีย์
+      setIsCardFocused(true);
+      const timerHighlight = setTimeout(() => {
+        setIsCardFocused(false);
+      }, 1500);
+
+      // Focus ช่องตัวเลขทันที
+      if (inputNumberRef.current) {
+        inputNumberRef.current.focus({ preventScroll: true });
+        if (inputNumberRef.current.select) {
+          inputNumberRef.current.select();
+        }
+      }
+
+      // Re-focus หลังจาก animation จบ
+      const timerFocus = setTimeout(() => {
+        if (inputNumberRef.current) {
+          inputNumberRef.current.focus({ preventScroll: true });
+          if (inputNumberRef.current.select) {
+            inputNumberRef.current.select();
+          }
+        }
+      }, 100);
+
+      return () => {
+        clearTimeout(timerHighlight);
+        clearTimeout(timerFocus);
+      };
+    }
+  }, [keyingFocusTrigger]);
 
   const currentCategoryObj = BET_CATEGORIES[activeCategory];
   const maxDigits = currentCategoryObj.digits;
@@ -302,6 +353,14 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
     if (validBetTypes.length > 0) {
       setSelectedBetTypes(validBetTypes);
     }
+
+    // เลื่อนจอไปที่แผงคีย์และ focus ช่องตัวเลข
+    if (keyingCardRef.current) {
+      keyingCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setTimeout(() => {
+      inputNumberRef.current?.focus();
+    }, 100);
   };
 
   // Realtime Quota Validation whenever staged items change or socket event received (Debounced)
@@ -697,7 +756,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
       {/* 2.5 Blocked & Half-Pay Numbers Bulletin (แผงแสดงรายการเลขอั้น / เลขจ่ายครึ่ง ประจำงวด) */}
       <div className="bg-obsidian-900 border border-slate-800 rounded-3xl p-4 sm:p-5 mb-5 shadow-2xl transition-all">
         {/* Header with Title, Badges & Collapsible Button */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div className={`flex flex-wrap items-center justify-between gap-3 ${isRulesExpanded ? 'border-b border-slate-800/80 pb-3' : ''}`}>
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-inner">
               <ShieldAlert className="w-5 h-5 text-amber-400" />
@@ -931,7 +990,14 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
       )}
 
       {/* 3. Unified Keying Panel (Manual & Quick Modes) */}
-      <div className="glass-panel rounded-3xl p-4 sm:p-5 mb-5 shadow-2xl border border-amber-500/20">
+      <div 
+        ref={keyingCardRef}
+        className={`glass-panel rounded-3xl p-4 sm:p-5 mb-5 shadow-2xl border transition-all duration-300 scroll-mt-20 md:scroll-mt-24 ${
+          isCardFocused
+            ? 'border-amber-400 ring-4 ring-amber-400/30 shadow-amber-500/20'
+            : 'border-amber-500/20'
+        }`}
+      >
         
         {/* Panel Header & Mode Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3.5 mb-4">
@@ -1055,6 +1121,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess })
                 </span>
               </div>
               <input
+                ref={inputNumberRef}
                 type="text"
                 maxLength={maxDigits}
                 value={inputNumber}

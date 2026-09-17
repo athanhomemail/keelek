@@ -21,6 +21,15 @@ export default function App() {
   const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [editingBill, setEditingBill] = useState(null);
+  const [keyingFocusTrigger, setKeyingFocusTrigger] = useState(0);
+
+  // Navigate handler that increments keyingFocusTrigger when 'keying' is selected
+  const handleNavigate = (page) => {
+    setActivePage(page);
+    if (page === 'keying') {
+      setKeyingFocusTrigger((prev) => prev + 1);
+    }
+  };
 
   // Fetch unread notifications count
   const fetchUnreadCount = async () => {
@@ -94,7 +103,7 @@ export default function App() {
       {/* 1. Main Navbar */}
       <Navbar 
         activePage={activePage} 
-        setActivePage={setActivePage}
+        setActivePage={handleNavigate}
         onOpenNotifications={() => {
           setNotifDrawerOpen(true);
           fetchUnreadCount();
@@ -105,10 +114,11 @@ export default function App() {
       {/* 3. Main Page Content */}
       <main className="flex-1 w-full pb-20 md:pb-8">
         {(activePage === 'rooms' || (!user.room_id && role !== 'ADMIN' && activePage !== 'admin')) && (
-          <GuestRoomPage onJoined={() => setActivePage('keying')} />
+          <GuestRoomPage onJoined={() => handleNavigate('keying')} />
         )}
         {activePage === 'keying' && role !== 'ADMIN' && user.room_id && (
           <KeyingPage
+            keyingFocusTrigger={keyingFocusTrigger}
             editingBill={editingBill}
             onCancelEdit={() => setEditingBill(null)}
             onEditSuccess={() => {
@@ -122,7 +132,7 @@ export default function App() {
             onEditBill={(bill) => {
               if (role !== 'ADMIN') {
                 setEditingBill(bill);
-                setActivePage('keying');
+                handleNavigate('keying');
               }
             }}
           />
@@ -142,7 +152,7 @@ export default function App() {
           setNotifDrawerOpen(false);
           fetchUnreadCount();
         }}
-        onNavigate={(page) => setActivePage(page)}
+        onNavigate={(page) => handleNavigate(page)}
       />
 
     </div>
