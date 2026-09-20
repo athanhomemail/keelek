@@ -8,7 +8,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Prompt', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['var(--app-font-family)', 'Sarabun', 'IBM Plex Sans Thai', 'Prompt', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        sarabun: ['Sarabun', 'sans-serif'],
+        ibm: ['IBM Plex Sans Thai', 'sans-serif'],
+        prompt: ['Prompt', 'sans-serif'],
       },
       fontSize: {
         '2xs': ['0.75rem', { lineHeight: '1rem' }],     /* 12px */

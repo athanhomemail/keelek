@@ -9,7 +9,7 @@ import {
 
 export default function Navbar({ activePage, setActivePage, onOpenNotifications, unreadCount = 0 }) {
   const { user, role, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, font, cycleFont, AVAILABLE_FONTS } = useTheme();
   const { showConfirm } = useModal();
   const [copied, setCopied] = useState(false);
 
@@ -156,6 +156,19 @@ export default function Navbar({ activePage, setActivePage, onOpenNotifications,
               ) : (
                 <Moon className="w-4 h-4 text-amber-600 hover:-rotate-12 transition-transform" />
               )}
+            </button>
+
+            {/* Font Switcher Button */}
+            <button
+              type="button"
+              onClick={cycleFont}
+              title={`เปลี่ยนแบบอักษร (ปัจจุบัน: ${AVAILABLE_FONTS?.find(f => f.id === font)?.name || 'สารบรรณ'} - คลิกเพื่อเปลี่ยน)`}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-slate-200 hover:text-amber-400 border border-slate-700/60 transition-all hover:scale-105 active:scale-95 text-xs font-semibold shadow-sm"
+            >
+              <span className="text-amber-400 font-bold text-xs leading-none">กA</span>
+              <span className="hidden md:inline text-[11px] text-slate-300">
+                {font === 'sarabun' ? 'สารบรรณ' : font === 'ibm' ? 'IBM Plex' : 'Prompt'}
+              </span>
             </button>
 
             {/* Room PIN Copy Button */}
