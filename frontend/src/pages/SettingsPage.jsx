@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext.jsx';
 import { Settings, Plus, Trash2, Save, AlertTriangle, XCircle, ShieldCheck, DollarSign } from 'lucide-react';
+import LotteryFlag from '../components/LotteryFlag.jsx';
 
 export default function SettingsPage() {
   const { showAlert, showConfirm } = useModal();
@@ -155,8 +156,8 @@ export default function SettingsPage() {
         {settingsList.map((lot) => (
           <div key={lot.lottery_id} className="bg-obsidian-900 border border-slate-800 rounded-3xl p-5 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-xl">{lot.lottery_code === 'THAI' ? '🇹🇭' : '🇱🇦'}</span>
+              <div className="flex items-center space-x-2.5">
+                <LotteryFlag code={lot.lottery_code} className="w-7 h-5 rounded shadow-sm" />
                 <h3 className="font-bold text-base text-amber-300">{lot.lottery_name}</h3>
               </div>
               

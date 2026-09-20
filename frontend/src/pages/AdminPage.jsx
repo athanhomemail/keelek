@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext.jsx';
 import { ShieldCheck, CheckCircle2, XCircle, Clock, Play, Calendar, AlertCircle, RefreshCw, PlusCircle, Trash2, CalendarDays, Lock, Unlock, Pencil } from 'lucide-react';
+import LotteryFlag from '../components/LotteryFlag.jsx';
 
 export default function AdminPage() {
   const { showAlert, showConfirm } = useModal();
@@ -373,30 +374,34 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={() => handleLotteryOrDateChange('1', '2026-09-16')}
-            className="px-2.5 py-1 bg-obsidian-800 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 border border-slate-700/60 rounded-lg text-xs transition-all"
+            className="px-2.5 py-1 bg-obsidian-800 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 border border-slate-700/60 rounded-lg text-xs transition-all flex items-center space-x-1.5"
           >
-            🇹🇭 หวยไทย (16 ก.ย. 2026)
+            <LotteryFlag code="THAI" className="w-4 h-3 rounded-sm shadow-sm" />
+            <span>หวยไทย (16 ก.ย. 2026)</span>
           </button>
           <button
             type="button"
             onClick={() => handleLotteryOrDateChange('1', '2026-10-01')}
-            className="px-2.5 py-1 bg-obsidian-800 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 border border-slate-700/60 rounded-lg text-xs transition-all"
+            className="px-2.5 py-1 bg-obsidian-800 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 border border-slate-700/60 rounded-lg text-xs transition-all flex items-center space-x-1.5"
           >
-            🇹🇭 หวยไทย (1 ต.ค. 2026)
+            <LotteryFlag code="THAI" className="w-4 h-3 rounded-sm shadow-sm" />
+            <span>หวยไทย (1 ต.ค. 2026)</span>
           </button>
           <button
             type="button"
             onClick={() => handleLotteryOrDateChange('1', '2026-10-16')}
-            className="px-2.5 py-1 bg-obsidian-800 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 border border-slate-700/60 rounded-lg text-xs transition-all"
+            className="px-2.5 py-1 bg-obsidian-800 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 border border-slate-700/60 rounded-lg text-xs transition-all flex items-center space-x-1.5"
           >
-            🇹🇭 หวยไทย (16 ต.ค. 2026)
+            <LotteryFlag code="THAI" className="w-4 h-3 rounded-sm shadow-sm" />
+            <span>หวยไทย (16 ต.ค. 2026)</span>
           </button>
           <button
             type="button"
             onClick={() => handleLotteryOrDateChange('2', '2026-09-16')}
-            className="px-2.5 py-1 bg-obsidian-800 hover:bg-blue-500/20 text-slate-200 hover:text-blue-300 border border-slate-700/60 rounded-lg text-xs transition-all"
+            className="px-2.5 py-1 bg-obsidian-800 hover:bg-blue-500/20 text-slate-200 hover:text-blue-300 border border-slate-700/60 rounded-lg text-xs transition-all flex items-center space-x-1.5"
           >
-            🇱🇦 หวยลาว (16 ก.ย. 2026)
+            <LotteryFlag code="LAO" className="w-4 h-3 rounded-sm shadow-sm" />
+            <span>หวยลาว (16 ก.ย. 2026)</span>
           </button>
         </div>
 
