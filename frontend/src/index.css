@@ -67,8 +67,15 @@ body.light,
 }
 
 @layer base {
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    @apply bg-obsidian-950 text-slate-100 min-h-screen transition-colors duration-200;
+    @apply bg-obsidian-950 text-slate-100 min-h-screen transition-colors duration-200 font-sans font-normal;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -242,10 +249,10 @@ html.light textarea::placeholder,
   color: #94a3b8 !important;
 }
 
-/* Ensure placeholders always render with Mitr font even when input uses font-mono */
+/* Ensure placeholders always render with Prompt font even when input uses font-mono */
 input::placeholder,
 textarea::placeholder {
-  font-family: 'Mitr', sans-serif !important;
+  font-family: 'Prompt', sans-serif !important;
 }
 
 /* Simulator top bar gradient in Light Mode */

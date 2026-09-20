@@ -133,8 +133,8 @@ export async function submitBill(req, res) {
       return res.status(400).json({ success: false, message: 'คุณต้องสังกัดห้องคีย์ก่อนออกบิล' });
     }
 
-    if (!customerName || !items || !items.length) {
-      return res.status(400).json({ success: false, message: 'กรุณากรอกชื่อลูกค้าและรายการตัวเลข' });
+    if (!items || !items.length) {
+      return res.status(400).json({ success: false, message: 'กรุณาระบุรายการตัวเลขที่ต้องการแทง' });
     }
 
     await connection.beginTransaction();
@@ -296,10 +296,13 @@ export async function submitBill(req, res) {
 
     // 7. บันทึกบิลลงฐานข้อมูล
     const customerPaymentStatus = isPaidByCustomer ? 'PAID' : 'UNPAID';
+    const effectiveCustomerName = customerName && customerName.trim() ? customerName.trim() : null;
+    const effectiveNote = note && note.trim() ? note.trim() : null;
+
     const [billResult] = await connection.query(
       `INSERT INTO bills (bill_no, room_id, draw_period_id, user_id, customer_name, note, total_amount, commission_amount, net_dealer_amount, customer_payment_status, member_payment_status, dealer_payment_status, prize_payout_status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UNPAID', 'UNPAID', 'NOT_WON')`,
-      [billNo, roomId, drawPeriodId, userId, customerName, note || null, totalAmount, commissionAmount, netDealerAmount, customerPaymentStatus]
+      [billNo, roomId, drawPeriodId, userId, effectiveCustomerName, effectiveNote, totalAmount, commissionAmount, netDealerAmount, customerPaymentStatus]
     );
 
     const billId = billResult.insertId;
@@ -328,7 +331,8 @@ export async function submitBill(req, res) {
         roomName: rooms[0].name,
         billNo,
         memberName: req.user.display_name,
-        customerName,
+        customerName: effectiveCustomerName,
+        note: effectiveNote,
         totalAmount,
         billId
       });
@@ -341,8 +345,8 @@ export async function submitBill(req, res) {
       bill: {
         id: billId,
         billNo,
-        customerName,
-        note,
+        customerName: effectiveCustomerName,
+        note: effectiveNote,
         totalAmount,
         commissionAmount,
         netDealerAmount,

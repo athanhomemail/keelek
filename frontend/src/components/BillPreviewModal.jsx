@@ -89,20 +89,22 @@ export default function BillPreviewModal({ bill, onClose }) {
               )}
             </div>
 
-            {/* Customer & Keyed by info */}
+            {/* Keyed by & Note info */}
             <div className="bg-obsidian-900/90 rounded-xl p-3 mb-4 text-xs space-y-1 border border-slate-800">
-              <div className="flex justify-between">
-                <span className="text-slate-400">ชื่อลูกค้า:</span>
-                <span className="font-bold text-amber-300">{bill.customerName || bill.customer_name}</span>
-              </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">ผู้คีย์บิล:</span>
                 <span className="text-slate-200">{bill.memberName || bill.member_name || 'สมาชิก'}</span>
               </div>
+              {Boolean(bill.customerName || bill.customer_name) && (bill.customerName !== '-' && bill.customer_name !== '-') && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">ชื่อลูกค้า:</span>
+                  <span className="font-bold text-amber-300">{bill.customerName || bill.customer_name}</span>
+                </div>
+              )}
               {bill.note && (
                 <div className="flex justify-between">
                   <span className="text-slate-400">หมายเหตุ:</span>
-                  <span className="text-slate-300 italic">{bill.note}</span>
+                  <span className="text-amber-400 font-medium">{bill.note}</span>
                 </div>
               )}
             </div>

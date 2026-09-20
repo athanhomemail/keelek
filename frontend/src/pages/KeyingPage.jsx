@@ -9,7 +9,7 @@ import StagedBetsPanel from '../components/StagedBetsPanel.jsx';
 import { 
   Plus, Trash2, Clock, CheckCircle, AlertTriangle, XCircle, DollarSign, 
   User, Sparkles, ChevronDown, ChevronUp, Eye, Receipt, Search, 
-  ShieldAlert, Ban, Info, X, Zap 
+  ShieldAlert, Ban, Info, X, Zap, FileText 
 } from 'lucide-react';
 
 const BET_TYPE_LABELS = {
@@ -108,7 +108,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
   const [isValidatingQuota, setIsValidatingQuota] = useState(false);
 
   // Customer & Bill info
-  const [customerName, setCustomerName] = useState('');
   const [note, setNote] = useState('');
   const [isPaid, setIsPaid] = useState(false);
 
@@ -532,10 +531,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
 
   // Submit bill to DB and open preview modal
   const handleSubmitBill = async () => {
-    if (!customerName.trim()) {
-      setErrorMsg('กรุณากรอกชื่อลูกค้าก่อนออกบิล');
-      return;
-    }
     if (!stagedItems.length) {
       setErrorMsg('กรุณาเพิ่มรายการตัวเลขอย่างน้อย 1 รายการ');
       return;
@@ -554,7 +549,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
     try {
       const res = await axios.post('/api/bets/submit', {
         drawPeriodId: selectedPeriod.id,
-        customerName: customerName.trim(),
         note: note.trim(),
         isPaidByCustomer: isPaid,
         items: stagedItems
@@ -564,7 +558,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
         setPreviewBill(res.data.bill);
         setStagedItems([]);
         setValidations({});
-        setCustomerName('');
         setNote('');
         setIsPaid(false);
       }
@@ -577,10 +570,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
 
   // Preview draft bill before submitting
   const handlePreviewDraft = () => {
-    if (!customerName.trim()) {
-      setErrorMsg('กรุณากรอกชื่อลูกค้าก่อนดูตัวอย่างบิล');
-      return;
-    }
     if (!stagedItems.length) {
       setErrorMsg('กรุณาเพิ่มรายการตัวเลขอย่างน้อย 1 รายการเพื่อดูตัวอย่าง');
       return;
@@ -593,7 +582,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
     const draft = {
       billNo: editingBill ? (editingBill.bill_no || editingBill.billNo) : 'DRAFT-' + Math.floor(1000 + Math.random() * 9000),
       periodName: selectedPeriod?.period_name || 'งวดปัจจุบัน',
-      customerName: customerName.trim() || 'ลูกค้าทั่วไป',
       memberName: user?.display_name || user?.nickname || 'ผู้คีย์ส่งเลข',
       note: note || '',
       items: stagedItems.map(it => ({
@@ -612,10 +600,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
 
   // Save edited bill (for existing bills)
   const handleSaveEditedBill = async () => {
-    if (!customerName.trim()) {
-      setErrorMsg('กรุณากรอกชื่อลูกค้า');
-      return;
-    }
     if (!stagedItems.length) {
       setErrorMsg('กรุณาเพิ่มรายการตัวเลขอย่างน้อย 1 รายการ');
       return;
@@ -629,7 +613,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
     setErrorMsg(null);
     try {
       const res = await axios.put(`/api/bills/${editingBill.id}`, {
-        customerName: customerName.trim(),
         note: note.trim(),
         items: stagedItems
       });
@@ -649,7 +632,6 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
   // Populate data when editing an existing bill
   useEffect(() => {
     if (editingBill) {
-      setCustomerName(editingBill.customer_name || editingBill.customerName || '');
       setNote(editingBill.note || '');
       setIsPaid((editingBill.customer_payment_status || editingBill.customerPaymentStatus) === 'PAID');
       if (editingBill.items && Array.isArray(editingBill.items)) {
@@ -690,9 +672,11 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
             <div>
               <div className="font-bold text-sm text-amber-300 flex items-center space-x-1.5">
                 <span>กำลังแก้ไขบิล: {editingBill.bill_no || editingBill.billNo}</span>
-                <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded-full font-mono text-amber-400">
-                  ลูกค้า: {editingBill.customer_name || editingBill.customerName}
-                </span>
+                {editingBill.note && (
+                  <span className="text-[10px] bg-amber-500/20 px-2 py-0.5 rounded-full font-sans text-amber-300">
+                    หมายเหตุ: {editingBill.note}
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-slate-300 mt-0.5">
                 คุณสามารถเพิ่ม/ลบรายการตัวเลข และกด "บันทึกการแก้ไขบิล" เพื่ออัปเดตยอดเงินใหม่ได้ทันที
@@ -1301,8 +1285,7 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
       <StagedBetsPanel
         stagedItems={stagedItems}
         validations={validations}
-        customerName={customerName}
-        onCustomerNameChange={setCustomerName}
+        note={note}
         periodName={selectedPeriod?.period_name}
         isPaid={isPaid}
         hasUnacceptedItems={hasUnacceptedItems}
@@ -1314,34 +1297,20 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
         onClearAll={handleClearAll}
       />
 
-      {/* 6. Customer & Checkout Footer Bar */}
+      {/* 6. Checkout Footer Bar */}
       <div className="glass-panel rounded-3xl p-5 shadow-2xl border border-amber-500/30">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="text-xs text-slate-300 block mb-1 font-semibold flex items-center space-x-1">
-              <User className="w-3.5 h-3.5 text-amber-400" />
-              <span>ชื่อลูกค้า *</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="เช่น ป้าพร ข้าวแกง หรือ พี่โต้ง"
-              className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs text-slate-300 block mb-1 font-semibold">หมายเหตุ (ถ้ามี)</label>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="เช่น จ่ายตอนเย็น, โอนเข้าพร้อมเพย์"
-              className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none"
-            />
-          </div>
+        <div className="mb-4">
+          <label className="text-xs text-slate-300 block mb-1 font-semibold flex items-center space-x-1.5">
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
+            <span>หมายเหตุ (จะกรอกหรือไม่กรอกก็ได้)</span>
+          </label>
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="เช่น จ่ายตอนเย็น, โอนเข้าพร้อมเพย์ หรือเว้นว่างไว้"
+            className="w-full bg-obsidian-950 border border-slate-700 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 outline-none transition-colors"
+          />
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-800 pt-4 gap-3">
@@ -1374,13 +1343,11 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
             {/* Separate Preview Button (Full width on mobile) */}
             <button
               type="button"
-              disabled={!stagedItems.length || hasUnacceptedItems || !customerName.trim() || isValidatingQuota}
+              disabled={!stagedItems.length || hasUnacceptedItems || isValidatingQuota}
               onClick={handlePreviewDraft}
               title={
                 !stagedItems.length
                   ? 'กรุณาเพิ่มตัวเลขก่อน'
-                  : !customerName.trim()
-                  ? 'กรุณากรอกชื่อลูกค้าก่อนดูตัวอย่าง'
                   : hasUnacceptedItems
                   ? 'มีตัวเลขที่ไม่สามารถรับได้ (อั้น หรือ เกินโควตา)'
                   : isValidatingQuota
@@ -1396,13 +1363,11 @@ export default function KeyingPage({ editingBill, onCancelEdit, onEditSuccess, k
             {/* Confirm / Submit / Save Edit Button (Full width on mobile) */}
             <button
               type="button"
-              disabled={submitting || isValidatingQuota || !stagedItems.length || hasUnacceptedItems || !customerName.trim()}
+              disabled={submitting || isValidatingQuota || !stagedItems.length || hasUnacceptedItems}
               onClick={editingBill ? handleSaveEditedBill : handleSubmitBill}
               title={
                 !stagedItems.length
                   ? 'กรุณาเพิ่มตัวเลขก่อน'
-                  : !customerName.trim()
-                  ? 'กรุณากรอกชื่อลูกค้าก่อนออกบิล'
                   : hasUnacceptedItems
                   ? 'มีตัวเลขที่ไม่สามารถรับได้ (อั้น หรือ เกินโควตา)'
                   : isValidatingQuota

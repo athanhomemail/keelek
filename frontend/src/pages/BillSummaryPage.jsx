@@ -164,7 +164,8 @@ export default function BillSummaryPage({ onEditBill }) {
 
   // Cancel Bill (Only for unpaid bills in open periods)
   const handleCancelBill = async (bill) => {
-    const ok = await showConfirm(`คุณต้องการยกเลิกบิล ${bill.bill_no} (ลูกค้า: ${bill.customer_name}) ใช่หรือไม่?`, {
+    const label = bill.note ? ` (หมายเหตุ: ${bill.note})` : (bill.customer_name && bill.customer_name !== '-' ? ` (ลูกค้า: ${bill.customer_name})` : '');
+    const ok = await showConfirm(`คุณต้องการยกเลิกบิล ${bill.bill_no}${label} ใช่หรือไม่?`, {
       subtitle: '* การยกเลิกจะคืนโควตาตัวเลขเข้าระบบทันที และไม่สามารถย้อนกลับได้',
       type: 'danger',
       confirmText: 'ยืนยันยกเลิกบิล',
@@ -368,7 +369,12 @@ export default function BillSummaryPage({ onEditBill }) {
                         )}
                       </div>
                       <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span>ลูกค้า: <strong className={isCancelled ? 'text-slate-400 line-through' : 'text-slate-200'}>{b.customer_name}</strong></span>
+                        {Boolean(b.customer_name && b.customer_name !== '-') && (
+                          <span>ลูกค้า: <strong className={isCancelled ? 'text-slate-400 line-through' : 'text-slate-200'}>{b.customer_name}</strong></span>
+                        )}
+                        {Boolean(b.note) && (
+                          <span>หมายเหตุ: <strong className="text-amber-400/90 font-medium">{b.note}</strong></span>
+                        )}
                         {(role === 'LEADER' || role === 'ADMIN') && (
                           <span>ผู้คีย์: <strong className="text-amber-300">{b.member_name}</strong></span>
                         )}

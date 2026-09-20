@@ -604,10 +604,16 @@ export default function NotificationDrawer({ isOpen, onClose, onNavigate }) {
                             <p className="font-mono font-bold text-slate-200 mt-0.5">{meta.billNo}</p>
                           </div>
                         )}
-                        {meta.customerName && (
+                        {Boolean(meta.customerName && meta.customerName !== '-') && (
                           <div className="p-2.5 rounded-xl bg-obsidian-900/80 border border-slate-800">
                             <span className="text-slate-400 text-[11px]">ลูกค้า:</span>
                             <p className="font-bold text-slate-200 mt-0.5">{meta.customerName}</p>
+                          </div>
+                        )}
+                        {Boolean(meta.note) && (
+                          <div className="p-2.5 rounded-xl bg-obsidian-900/80 border border-slate-800">
+                            <span className="text-slate-400 text-[11px]">หมายเหตุ:</span>
+                            <p className="font-medium text-amber-300 mt-0.5">{meta.note}</p>
                           </div>
                         )}
                         {meta.memberName && (

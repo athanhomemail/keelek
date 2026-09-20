@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS bills (
     room_id INT NOT NULL,
     draw_period_id INT NOT NULL,
     user_id INT NOT NULL COMMENT 'สมาชิกคนที่คีย์บิลนี้',
-    customer_name VARCHAR(100) NOT NULL,
+    customer_name VARCHAR(100) NULL DEFAULT NULL,
     note TEXT NULL,
     total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
     commission_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,

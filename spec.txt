@@ -3,7 +3,7 @@
 โทนระบบจะเป็นสี มืดๆ ส้มๆ ทองๆ อะไรประมาณนี้
 ระบบนี้จะต้องรองรับหน้าจอมือถือ เพราะส่วนใหญ่จะใช้บนมือถือผ่าน Line กัน
 
-front ทั้งระบบ Mitr
+front ทั้งระบบ Prompt (โปร่ง สบายตา อ่านง่าย ไม่หนา)
 
 Tech Stack
 - frontend : reactjs + vite + tailwindcss + axios + socket.io

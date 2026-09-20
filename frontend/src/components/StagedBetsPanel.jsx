@@ -33,8 +33,7 @@ const BET_ORDER = ['2TOP', '2BOTTOM', '3TOP', '3TOD', 'RUN_TOP', 'RUN_BOTTOM'];
 export default function StagedBetsPanel({
   stagedItems = [],
   validations = {},
-  customerName = '',
-  onCustomerNameChange,
+  note = '',
   periodName = '',
   isPaid = false,
   hasUnacceptedItems = false,
@@ -85,56 +84,8 @@ export default function StagedBetsPanel({
     };
   }, []);
 
-  const handleInputFocus = () => {
-    // ผู้ใช้คลิกเพื่อกรอกและ cursor อยู่ในช่องกรอก -> หยุดนับถอยหลังทันที
-    clearWarningTimer();
-  };
-
-  const handleInputBlur = () => {
-    // เมื่อ cursor ออกจากช่องกรอก
-    if (customerName && customerName.trim()) {
-      // กรอกชื่อแล้ว -> ปิดการแจ้งเตือนทันที
-      setTimeout(() => {
-        clearWarningTimer();
-        setTabWarning('');
-      }, 150);
-    } else {
-      // ยังไม่ได้กรอก -> เริ่มนับถอยหลัง 5 วินาทีก่อนปิด
-      startWarningTimer(5000);
-    }
-  };
-
-  const handleConfirmCustomerName = () => {
-    if (customerName && customerName.trim()) {
-      clearWarningTimer();
-      setTabWarning('');
-      if (!hasUnacceptedItems) {
-        setViewMode('CAPTURE');
-      } else {
-        const names = unacceptedItems.map(it => `${it.number} (${BET_TYPE_INFO[it.betType]?.label || it.betType})`).join(', ');
-        setTabWarning(`🚫 มีตัวเลขที่ไม่สามารถรับได้ (${names}) กรุณาลบออกหรือปรับยอดก่อนเปิดสลิป`);
-        startWarningTimer(5000);
-      }
-    }
-  };
-
-  const handleInputKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleConfirmCustomerName();
-    } else if (e.key === 'Escape') {
-      clearWarningTimer();
-      setTabWarning('');
-    }
-  };
-
-  // ควบคุมการสลับไปยังแท็บสลิปแคปส่งลูกค้า ต้องมีชื่อลูกค้าและไม่มีเลขที่รับไม่ได้
+  // ควบคุมการสลับไปยังแท็บสลิปแคปส่งลูกค้า
   const handleSwitchToCapture = () => {
-    if (!customerName || !customerName.trim()) {
-      setTabWarning('⚠️ กรุณากรอกชื่อลูกค้าก่อนเปิดสลิปแคปส่งลูกค้า');
-      startWarningTimer(5000);
-      return;
-    }
     if (hasUnacceptedItems) {
       const names = unacceptedItems.map(it => `${it.number} (${BET_TYPE_INFO[it.betType]?.label || it.betType})`).join(', ');
       setTabWarning(`🚫 มีตัวเลขที่ไม่สามารถรับได้ (${names}) กรุณาลบออกหรือปรับยอดก่อนเปิดสลิป`);
@@ -151,20 +102,14 @@ export default function StagedBetsPanel({
     setViewMode('CAPTURE');
   };
 
-  // หากอยู่ในโหมดสลิปอยู่ แล้วชื่อลูกค้าถูกลบออก หรือมีเลขที่กลายเป็นอั้น/เกินโควตา ให้เด้งกลับมาหน้าการ์ดปรับแต่ง
+  // หากอยู่ในโหมดสลิปอยู่ แล้วมีเลขที่กลายเป็นอั้น/เกินโควตา ให้เด้งกลับมาหน้าการ์ดปรับแต่ง
   React.useEffect(() => {
-    if (viewMode === 'CAPTURE') {
-      if (!customerName || !customerName.trim()) {
-        setViewMode('CARDS');
-        setTabWarning('⚠️ กรุณากรอกชื่อลูกค้าก่อนเปิดสลิปแคปส่งลูกค้า');
-        startWarningTimer(5000);
-      } else if (hasUnacceptedItems) {
-        setViewMode('CARDS');
-        setTabWarning('🚫 มีตัวเลขที่ไม่สามารถรับได้ ระบบเปลี่ยนกลับมาที่หน้าการ์ดปรับแต่งเพื่อแก้ไข');
-        startWarningTimer(5000);
-      }
+    if (viewMode === 'CAPTURE' && hasUnacceptedItems) {
+      setViewMode('CARDS');
+      setTabWarning('🚫 มีตัวเลขที่ไม่สามารถรับได้ ระบบเปลี่ยนกลับมาที่หน้าการ์ดปรับแต่งเพื่อแก้ไข');
+      startWarningTimer(5000);
     }
-  }, [customerName, hasUnacceptedItems, viewMode]);
+  }, [hasUnacceptedItems, viewMode]);
 
   // จัดกลุ่ม stagedItems ตาม betType โดยยังคงเก็บ original index ไว้สำหรับ update/delete
   const groupedByType = useMemo(() => {
@@ -253,7 +198,7 @@ export default function StagedBetsPanel({
   // สร้างข้อความสรุปสำหรับแชร์ทาง Line
   const generateSlipText = () => {
     let text = `🏷️ รายการเลขที่คีย์ | Keelek\n`;
-    if (customerName.trim()) text += `👤 ลูกค้า: ${customerName.trim()}\n`;
+    if (note && note.trim()) text += `📝 หมายเหตุ: ${note.trim()}\n`;
     if (periodName) text += `📅 งวด: ${periodName}\n`;
     text += `⏰ เวลา: ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.\n`;
     text += `--------------------------------\n`;
@@ -303,12 +248,6 @@ export default function StagedBetsPanel({
   };
 
   const handleCopySlip = () => {
-    if (!customerName || !customerName.trim()) {
-      setTabWarning('⚠️ กรุณากรอกชื่อลูกค้าก่อนคัดลอกข้อความ');
-      startWarningTimer(5000);
-      setViewMode('CARDS');
-      return;
-    }
     if (hasUnacceptedItems) {
       setTabWarning('🚫 มีตัวเลขที่ไม่สามารถรับได้ กรุณาแก้ไขก่อน');
       startWarningTimer(5000);
@@ -324,12 +263,6 @@ export default function StagedBetsPanel({
   // คัดลอกรูปภาพการ์ดสลิปไปยัง Clipboard โดยตรง
   const handleCopyImage = async () => {
     if (!slipRef.current || copyingImg) return;
-    if (!customerName || !customerName.trim()) {
-      setTabWarning('⚠️ กรุณากรอกชื่อลูกค้าก่อนคัดลอกรูปภาพ');
-      startWarningTimer(5000);
-      setViewMode('CARDS');
-      return;
-    }
     if (hasUnacceptedItems) {
       setTabWarning('🚫 มีตัวเลขที่ไม่สามารถรับได้ กรุณาแก้ไขก่อนคัดลอกรูปภาพ');
       startWarningTimer(5000);
@@ -371,7 +304,7 @@ export default function StagedBetsPanel({
           console.warn('Clipboard write image failed, downloading instead:', clipErr);
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
-          link.download = `รายการแทงหวย_${customerName || 'ลูกค้า'}_${new Date().toISOString().slice(0, 10)}.png`;
+          link.download = `รายการแทงหวย_${note ? note.replace(/[/\\?%*:|"<>]/g, '_') : 'บิล'}_${new Date().toISOString().slice(0, 10)}.png`;
           link.href = url;
           link.click();
           URL.revokeObjectURL(url);
@@ -395,12 +328,6 @@ export default function StagedBetsPanel({
   // ดาวน์โหลดรูปภาพสลิปโดยตรง
   const handleDownloadImage = async () => {
     if (!slipRef.current) return;
-    if (!customerName || !customerName.trim()) {
-      setTabWarning('⚠️ กรุณากรอกชื่อลูกค้าก่อนดาวน์โหลดรูปภาพ');
-      startWarningTimer(5000);
-      setViewMode('CARDS');
-      return;
-    }
     if (hasUnacceptedItems) {
       setTabWarning('🚫 มีตัวเลขที่ไม่สามารถรับได้ กรุณาแก้ไขก่อน');
       startWarningTimer(5000);
@@ -415,7 +342,7 @@ export default function StagedBetsPanel({
         logging: false
       });
       const link = document.createElement('a');
-      link.download = `รายการแทงหวย_${customerName || 'ลูกค้า'}_${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `รายการแทงหวย_${note ? note.replace(/[/\\?%*:|"<>]/g, '_') : 'บิล'}_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
@@ -468,23 +395,21 @@ export default function StagedBetsPanel({
               type="button"
               onClick={handleSwitchToCapture}
               title={
-                !customerName?.trim()
-                  ? 'กรุณากรอกชื่อลูกค้าก่อนเปิดสลิปแคปส่งลูกค้า'
-                  : hasUnacceptedItems
+                hasUnacceptedItems
                   ? 'มีตัวเลขที่ไม่สามารถรับได้ กรุณาแก้ไขก่อน'
                   : 'สลิปแคปส่งลูกค้า'
               }
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === 'CAPTURE'
                   ? 'bg-amber-500 text-obsidian-950 shadow-md font-bold'
-                  : (!customerName?.trim() || hasUnacceptedItems)
+                  : hasUnacceptedItems
                   ? 'text-slate-500 opacity-60 hover:opacity-80'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Camera className="w-3.5 h-3.5" />
               <span>สลิปแคปส่งลูกค้า</span>
-              {(!customerName?.trim() || hasUnacceptedItems) && (
+              {hasUnacceptedItems && (
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 ml-0.5" />
               )}
             </button>
@@ -502,36 +427,13 @@ export default function StagedBetsPanel({
         </div>
       </div>
 
-      {/* Warning banner when customer name is missing or blocked items exist */}
+      {/* Warning banner when blocked items exist */}
       {tabWarning && (
         <div className="mb-4 px-3.5 py-2.5 rounded-2xl text-xs bg-red-500/15 border border-red-500/40 text-red-300 flex flex-wrap items-center justify-between gap-2 shadow-lg animate-fade-in">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
             <span>{tabWarning}</span>
           </div>
-          {Boolean(tabWarning.includes('ชื่อลูกค้า')) && onCustomerNameChange && (
-            <div className="flex items-center space-x-1.5 ml-auto">
-              <span className="text-[11px] text-amber-300 font-semibold">ชื่อลูกค้า:</span>
-              <input
-                type="text"
-                placeholder="ระบุชื่อลูกค้า..."
-                value={customerName}
-                onChange={(e) => onCustomerNameChange(e.target.value)}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
-                onKeyDown={handleInputKeyDown}
-                className="bg-obsidian-950 border border-amber-500/60 rounded-xl px-2.5 py-1 text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-amber-400"
-              />
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={handleConfirmCustomerName}
-                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-obsidian-950 font-bold rounded-lg text-xs transition-all active:scale-95 shadow-sm"
-              >
-                ตกลง
-              </button>
-            </div>
-          )}
           <button 
             type="button"
             onClick={() => {
@@ -754,9 +656,11 @@ export default function StagedBetsPanel({
                     รอส่งบิล
                   </span>
                 </div>
-                <div className="text-xs text-slate-300 mt-1">
-                  ลูกค้า: <strong className="text-amber-400 font-semibold">{customerName || 'ลูกค้าทั่วไป'}</strong>
-                </div>
+                {note && (
+                  <div className="text-xs text-slate-300 mt-1">
+                    หมายเหตุ: <strong className="text-amber-400 font-semibold">{note}</strong>
+                  </div>
+                )}
               </div>
 
               <div className="text-right text-xs">

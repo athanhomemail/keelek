@@ -133,16 +133,22 @@ class NotificationService {
   /**
    * แจ้งเตือนหัวหน้าเมื่อมีบิลหวยใหม่ถูกคีย์เข้ามา
    */
-  async notifyLeaderNewBill({ leaderId, roomName, billNo, memberName, customerName, totalAmount, billId }) {
+  async notifyLeaderNewBill({ leaderId, roomName, billNo, memberName, customerName, note, totalAmount, billId }) {
     const title = `🧾 บิลหวยใหม่: ${billNo}`;
-    const message = `"${memberName}" คีย์บิลให้ลูกค้า "${customerName}" ยอดรวม ${Number(totalAmount).toLocaleString()} บาท ในห้อง "${roomName}"`;
+    let extra = '';
+    if (customerName) {
+      extra = ` (${customerName})`;
+    } else if (note) {
+      extra = ` (${note})`;
+    }
+    const message = `"${memberName}" คีย์บิล ${billNo}${extra} ยอดรวม ${Number(totalAmount).toLocaleString()} บาท ในห้อง "${roomName}"`;
 
     return this.createNotification({
       recipientUserId: leaderId,
       title,
       message,
       type: 'BILL',
-      meta: { billId, billNo, memberName, customerName, totalAmount, roomName }
+      meta: { billId, billNo, memberName, customerName, note, totalAmount, roomName }
     });
   }
 

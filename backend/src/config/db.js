@@ -12,7 +12,8 @@ export const pool = mysql.createPool({
   connectionLimit: 15,
   queueLimit: 0,
   charset: 'utf8mb4',
-  timezone: 'Z'
+  timezone: '+07:00',
+  dateStrings: ['DATE']
 });
 
 export async function testDbConnection() {

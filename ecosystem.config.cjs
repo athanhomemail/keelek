@@ -10,7 +10,8 @@ module.exports = {
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000
+        PORT: 3000,
+        TZ: 'Asia/Bangkok'
       }
     }
     // อนาคตสามารถเพิ่มระบบอื่นๆ ต่อท้ายที่นี่ได้ เช่น:
